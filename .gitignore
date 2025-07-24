@@ -1,7 +1,17 @@
-# Build directories
-build/
-bin/
+# Build directories (but keep README files)
+build/*
+!build/README.md
+bin/*
+!bin/README.md
 lib/
+out/
+dist/
+
+# Generated executables
+v8_claude_console
+demo
+enhanced_demo
+test_*
 
 # CMake generated files
 CMakeCache.txt
@@ -9,14 +19,11 @@ CMakeFiles/
 cmake_install.cmake
 Makefile
 install_manifest.txt
+CTestTestfile.cmake
+compile_commands.json
+*.cmake
 
-# IDE files
-.vscode/
-.vs/
-*.vcxproj*
-*.sln
-
-# Compiler outputs
+# Build artifacts
 *.o
 *.obj
 *.exe
@@ -25,19 +32,104 @@ install_manifest.txt
 *.dylib
 *.a
 *.lib
+*.d
+*.deps
+*.ninja
+*.ninja_deps
+*.ninja_log
+
+# IDE files
+.vscode/
+.vs/
+.idea/
+*.vcxproj*
+*.sln
+*.suo
+*.user
+*.ncb
+*.aps
+*.dsw
+*.clw
+*.opt
+*.plg
 
 # Debug files
 *.pdb
+*.ilk
 *.dSYM/
+*.gdb_history
+core
+vgcore.*
 
-# Logs
+# Coverage files
+*.gcno
+*.gcda
+*.gcov
+coverage.info
+coverage/
+
+# Profiling files
+*.prof
+gmon.out
+callgrind.out.*
+
+# Static analysis
+cppcheck.xml
+*.sarif
+
+# Package managers
+conan/
+vcpkg/
+node_modules/
+
+# Documentation generated
+docs/html/
+docs/latex/
+Doxyfile.bak
+
+# Test results
+test_results/
+*.xml
+
+# Logs and traces
 *.log
+*.trace
+strace.out
 
 # OS specific
 .DS_Store
 Thumbs.db
+Desktop.ini
+*.lnk
 
 # Temporary files
 *~
 *.tmp
 *.temp
+*.swp
+*.swo
+*.orig
+*.rej
+.#*
+
+# Python bytecode (for PyClaudeCli integration)
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# Editor backups
+*.bak
+*.backup
+*_backup
+
+# Archive files
+*.tar.gz
+*.zip
+*.7z
+*.rar
+
+# Generated configuration
+config.h
+build_config.h
+version.h
