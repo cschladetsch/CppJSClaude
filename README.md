@@ -2,6 +2,12 @@
 
 <img src="Resources/Title.png" alt="CLL Title" width="400" height="auto">
 
+## Demo
+
+![Demo](Resources/Demo1.gif]
+
+## Description
+
 A high-performance C++20 command-line interface with a sophisticated three-mode system: Shell (λ), JavaScript (φ), and Ask (θ). CLL provides seamless switching between shell commands, V8 JavaScript execution, and Claude AI interactions with visual prompt indicators and simple text commands.
 
 ## Features
