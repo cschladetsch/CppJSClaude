@@ -31,7 +31,8 @@ struct CommandResult {
 // Console mode
 enum class ConsoleMode {
     Shell,
-    JavaScript
+    JavaScript,
+    Ask
 };
 
 // Multi-line input mode
@@ -54,6 +55,7 @@ public:
     // Execute commands
     CommandResult ExecuteCommand(const std::string& command);
     CommandResult ExecuteJavaScript(const std::string& code);
+    CommandResult ExecuteAsk(const std::string& question);
     CommandResult ExecuteShellCommand(const std::string& command);
     CommandResult ExecuteClaudeQuery(const std::string& question);
     
@@ -71,6 +73,7 @@ public:
     void SetMode(ConsoleMode mode) { mode_ = mode; }
     ConsoleMode GetMode() const { return mode_; }
     bool IsJavaScriptMode() const { return mode_ == ConsoleMode::JavaScript; }
+    bool IsAskMode() const { return mode_ == ConsoleMode::Ask; }
     
     // Multi-line input management
     bool IsInMultiLineMode() const { return multiLineMode_ != MultiLineMode::None; }

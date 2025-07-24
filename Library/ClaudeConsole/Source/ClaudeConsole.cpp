@@ -140,6 +140,11 @@ CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
         return {true, "", "", std::chrono::microseconds(0), 0};
     }
     
+    // Handle comments - lines starting with # are ignored (like bash/zsh)
+    if (!trimmed.empty() && trimmed[0] == '#') {
+        return {true, "", "", std::chrono::microseconds(0), 0};
+    }
+    
     // Check for mode switch commands
     if (trimmed == "js" || trimmed == "javascript") {
         SetMode(ConsoleMode::JavaScript);
@@ -147,31 +152,110 @@ CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
     } else if (trimmed == "shell" || trimmed == "sh") {
         SetMode(ConsoleMode::Shell);
         return {true, "Switched to Shell mode", "", std::chrono::microseconds(0), 0};
+    } else if (trimmed == "ask" || trimmed == "claude") {
+        SetMode(ConsoleMode::Ask);
+        return {true, "Switched to Ask mode", "", std::chrono::microseconds(0), 0};
     }
     
-    // Check for JavaScript lines starting with &
-    if (!trimmed.empty() && trimmed[0] == '&') {
-        if (trimmed.length() == 1) {
-            // Just '&' pressed - start multi-line JavaScript mode
-            StartMultiLineMode(MultiLineMode::JavaScript);
-            return {true, "Multi-line JavaScript mode (Ctrl-D to execute)", "", std::chrono::microseconds(0), 0};
-        } else {
-            // '&' with content - execute immediately
-            std::string jsCode = trimmed.substr(1);
+    // Check for command substitution with backticks `cmd`
+    size_t backtickStart = 0;
+    std::string processed = trimmed;
+    
+    while ((backtickStart = processed.find('`', backtickStart)) != std::string::npos) {
+        size_t backtickEnd = processed.find('`', backtickStart + 1);
+        if (backtickEnd == std::string::npos) {
+            break; // No closing backtick found
+        }
+        
+        std::string shellCommand = processed.substr(backtickStart + 1, backtickEnd - backtickStart - 1);
+        
+        // Execute the shell command and capture output
+        FILE* pipe = popen((shellCommand + " 2>&1").c_str(), "r");
+        if (pipe == nullptr) {
+            return {false, "Failed to execute command: " + shellCommand, "", std::chrono::microseconds(0), 1};
+        }
+        
+        std::string output;
+        char buffer[128];
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            output += buffer;
+        }
+        pclose(pipe);
+        
+        // Remove trailing newline if present
+        if (!output.empty() && output.back() == '\n') {
+            output.pop_back();
+        }
+        
+        // Replace the `cmd` with the output
+        processed.replace(backtickStart, backtickEnd - backtickStart + 1, output);
+        backtickStart += output.length();
+    }
+    
+    // If command substitution occurred, process the result
+    if (processed != trimmed) {
+        if (processed.empty()) {
+            return {true, "", "", std::chrono::microseconds(0), 0};
+        }
+        return ExecuteCommand(processed);
+    }
+    
+    // Check for command prefixes
+    if (!trimmed.empty()) {
+        char prefix = trimmed[0];
+        
+        // Handle & prefix (JavaScript)
+        if (prefix == '&') {
+            if (trimmed.length() == 1) {
+                SetMode(ConsoleMode::JavaScript);
+                return {true, "Switched to JavaScript mode", "", std::chrono::microseconds(0), 0};
+            } else {
+                std::string jsCode = trimmed.substr(1);
+                return ExecuteJavaScript(jsCode);
+            }
+        }
+        
+        // Handle ? prefix (Ask Claude)
+        if (prefix == '?') {
+            if (trimmed.length() == 1) {
+                SetMode(ConsoleMode::Ask);
+                return {true, "Switched to Ask mode", "", std::chrono::microseconds(0), 0};
+            } else {
+                std::string question = trimmed.substr(1);
+                return ExecuteAsk(question);
+            }
+        }
+        
+        
+        // Handle $ prefix (Shell)
+        if (prefix == '$') {
+            if (trimmed.length() == 1) {
+                SetMode(ConsoleMode::Shell);
+                return {true, "Switched to Shell mode", "", std::chrono::microseconds(0), 0};
+            } else {
+                std::string command = trimmed.substr(1);
+                return ExecuteShellCommand(command);
+            }
+        }
+        
+        // Handle φ prefix (JavaScript) - UTF-8 handling
+        if (trimmed == "φ") {
+            SetMode(ConsoleMode::JavaScript);
+            return {true, "Switched to JavaScript mode", "", std::chrono::microseconds(0), 0};
+        } else if (trimmed.length() > 2 && trimmed.substr(0, 2) == "φ") {
+            // UTF-8 φ is 2 bytes
+            std::string jsCode = trimmed.substr(2);
             return ExecuteJavaScript(jsCode);
         }
-    }
-    
-    // Check for Claude AI queries starting with ?
-    if (!trimmed.empty() && trimmed[0] == '?') {
-        if (trimmed.length() == 1) {
-            // Just '?' pressed - start multi-line ask mode
-            StartMultiLineMode(MultiLineMode::Ask);
-            return {true, "Multi-line Claude AI mode (Ctrl-D to execute)", "", std::chrono::microseconds(0), 0};
-        } else {
-            // '?' with content - execute immediately
-            std::string question = trimmed.substr(1);
-            return ExecuteClaudeQuery(question);
+        
+        // Handle θ prefix (Ask) - UTF-8 handling
+        if (trimmed == "θ") {
+            SetMode(ConsoleMode::Ask);
+            return {true, "Switched to Ask mode", "", std::chrono::microseconds(0), 0};
+        } else if (trimmed.length() > 2 && trimmed.substr(0, 2) == "θ") {
+            // UTF-8 θ is 2 bytes
+            std::string question = trimmed.substr(2);
+            return ExecuteAsk(question);
         }
     }
     
@@ -197,6 +281,8 @@ CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
     // Execute based on mode
     if (mode_ == ConsoleMode::JavaScript) {
         return ExecuteJavaScript(trimmed);
+    } else if (mode_ == ConsoleMode::Ask) {
+        return ExecuteAsk(trimmed);
     } else {
         return ExecuteShellCommand(trimmed);
     }
@@ -217,6 +303,20 @@ CommandResult ClaudeConsole::ExecuteJavaScript(const std::string& code) {
     result.executionTime = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::high_resolution_clock::now() - startTime);
     result.exitCode = result.success ? 0 : 1;
+    
+    return result;
+}
+
+CommandResult ClaudeConsole::ExecuteAsk(const std::string& question) {
+    auto startTime = std::chrono::high_resolution_clock::now();
+    
+    CommandResult result;
+    result.success = true;
+    result.output = std::format("// Ask mode - Claude AI integration would handle: {}\n// (Claude AI integration not implemented yet)\n", question);
+    
+    result.executionTime = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::high_resolution_clock::now() - startTime);
+    result.exitCode = 0;
     
     return result;
 }
@@ -656,7 +756,8 @@ std::string ClaudeConsole::GetPrompt() const {
     std::string prompt = promptFormat_;
     
     // Replace {mode} placeholder
-    std::string modeStr = (mode_ == ConsoleMode::JavaScript) ? "js" : "sh";
+    std::string modeStr = (mode_ == ConsoleMode::JavaScript) ? "φ" : 
+                          (mode_ == ConsoleMode::Ask) ? "θ" : "sh";
     size_t pos = prompt.find("{mode}");
     if (pos != std::string::npos) {
         prompt.replace(pos, 6, modeStr);
@@ -668,7 +769,7 @@ std::string ClaudeConsole::GetPrompt() const {
 std::string ClaudeConsole::GetMultiLinePrompt() const {
     switch (multiLineMode_) {
         case MultiLineMode::JavaScript:
-            return "  ...js> ";
+            return "  ...φ ";
         case MultiLineMode::Ask:
             return GetClaudePrompt();
         default:

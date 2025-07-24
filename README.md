@@ -2,18 +2,20 @@
 
 <img src="Resources/Title.png" alt="CLL Title" width="400" height="auto">
 
-A high-performance C++20 command-line interface that provides a zsh-like interactive shell with integrated V8 JavaScript engine and Claude AI capabilities. CLL offers a modern, feature-rich console experience combining the best of shell commands, JavaScript execution, and AI-powered assistance.
+A high-performance C++20 command-line interface with a sophisticated three-mode system: Shell (λ), JavaScript (φ), and Ask (θ). CLL provides seamless switching between shell commands, V8 JavaScript execution, and Claude AI interactions with visual prompt indicators and simple text commands.
 
 ## Features
 
-- **🐚 Zsh-Like Interface**: Full shell command support with advanced features (globbing, pipes, redirection)
-- **⚡ V8 JavaScript Engine**: Real JavaScript execution with `&` prefix injection
-- **🤖 Claude AI Integration**: Built-in AI queries with `?` prefix 
-- **🎨 Modern Terminal**: Configurable prompts with colored output
-- **📋 Shared Configuration**: Cross-application config in `~/.config/cll/` and `~/.config/shared/`
-- **🔧 Smart Dependencies**: Intelligent CMake submodule management
-- **🏗️ Library Architecture**: Modular design with reusable ClaudeConsole library
-- **🔥 DLL Hot-Loading**: Dynamic library loading and reloading capabilities
+- **🎯 Three-Mode System**: Shell (λ), JavaScript (φ), and Ask (θ) modes with visual prompts
+- **🔄 Simple Mode Switching**: Type `sh`, `js`, or `ask` to change modes instantly
+- **🐚 Zsh-Like Shell**: Full shell command support (globbing, pipes, redirection, timing)
+- **⚡ V8 JavaScript Engine**: Real JavaScript execution with Math, Date, console support
+- **🤖 Claude AI Integration**: Natural language queries and programming assistance
+- **⚡ Single-Command Prefixes**: `&<code>` for JS, `?<question>` for Claude, `$<command>` for shell
+- **🎨 Greek Letter Prompts**: Visual indicators - λ (shell), φ (JavaScript), θ (ask)
+- **📋 Smart Configuration**: Auto-setup in `~/.config/cll/` and `~/.config/shared/`
+- **🏗️ Library Architecture**: Modular ClaudeConsole library for integration
+- **⏱️ Performance Monitoring**: Precise execution timing for all commands
 
 ## Quick Start
 
@@ -24,29 +26,81 @@ A high-performance C++20 command-line interface that provides a zsh-like interac
 # Or build manually
 ./build.sh release
 
-# Run CLL
+# Run CLL (starts in Shell mode with λ prompt)
 ./Bin/cll
 
-# Use Claude AI with ? prefix
-❯ ?What is the capital of France?
-
-# Execute JavaScript with & prefix  
-❯ &Math.sqrt(64)
-8
+# Shell mode - execute any shell command
+λ ls -la | grep README
+-rw-r--r-- 1 user user 12543 Nov 24 10:30 README.md
+(2.1ms)
 
 # Switch to JavaScript mode
-❯ js
-[js] ❯ console.log("Hello World!");
+λ js
+φ Math.sqrt(64)
+8
+φ console.log("Hello World!")
 Hello World
 
-# Run configuration wizard
-❯ configure
+# Switch to Ask mode
+φ ask  
+θ What is the capital of France?
+The capital of France is Paris.
 
-# Execute any shell command with timing
-❯ ls -la | grep README
--rw-r--r-- 1 user user 12543 Nov 24 10:30 README.md
-[Executed in 2.1ms]
+# Switch back to Shell mode
+θ sh
+λ pwd
+/home/user/project
+
+# Single-command prefixes (stay in current mode)
+λ &Math.PI * 2        # JavaScript
+6.283185307179586
+λ ?What is 2+2?        # Ask Claude
+2+2 equals 4.
+λ $pwd                # Shell command from any mode
+/home/user/project
+
+# Comments work like bash/zsh
+λ # This is a comment and is ignored
+
+# cmd command - execute shell and process output in current mode
+λ js
+φ cmd echo `Math.sqrt(16)`
+4
+φ ask  
+θ cmd echo `What is JavaScript?`
+JavaScript is a programming language...
 ```
+
+## Three-Mode System
+
+CLL operates in three distinct modes, each with its own visual prompt and behavior:
+
+### 🐚 Shell Mode (λ)
+- **Default mode** - starts here automatically
+- **Prompt**: `λ` (lambda in cyan)
+- **Behavior**: Execute shell commands, pipes, globbing
+- **Switch**: Type `sh` or `shell`
+
+### ⚡ JavaScript Mode (φ) 
+- **Prompt**: `φ` (phi in yellow)
+- **Behavior**: Everything you type is JavaScript code
+- **Features**: Math, Date, console, all V8 JavaScript
+- **Switch**: Type `js` or `javascript`
+
+### 🤖 Ask Mode (θ)
+- **Prompt**: `θ` (theta in magenta)  
+- **Behavior**: Everything you type goes to Claude AI
+- **Features**: Natural language queries, programming help
+- **Switch**: Type `ask` or `claude`
+
+### Single-Command Prefixes
+Execute once and stay in current mode:
+- `&<code>` - Run JavaScript code
+- `?<question>` - Ask Claude a question
+- `$<command>` - Run shell command
+
+### Comments
+- `# anything` - Ignored as comments (like bash/zsh)
 
 ## Architecture
 
@@ -78,20 +132,27 @@ CLL Architecture:
 
 CLL provides a zsh-like interface with special prefixes for enhanced functionality:
 
-### Command Prefixes
-- **Default**: Shell commands (bash/zsh compatible)
-- **`&` prefix**: JavaScript injection (`&console.log('Hello')`)
-- **`?` prefix**: Claude AI queries (`?What is recursion?`)
+### Mode Switching Commands
+- **`sh` / `shell`** - Switch to Shell mode (λ prompt)
+- **`js` / `javascript`** - Switch to JavaScript mode (φ prompt)
+- **`ask` / `claude`** - Switch to Ask mode (θ prompt)
+
+### Single-Command Prefixes (stay in current mode)
+- **`&<code>`** - Execute JavaScript once (`&Math.sqrt(16)`)
+- **`?<question>`** - Ask Claude once (`?What is recursion?`)
+- **`$<command>`** - Execute shell command once (`$pwd`)
+
+### Comments  
+- **`# anything`** - Ignored as comments (like bash/zsh)
 
 ### Built-in Commands
-- **`configure`** - Run configuration wizard
-- **`js` / `javascript`** - Switch to JavaScript mode
-- **`shell` / `sh`** - Switch to shell mode  
-- **`config`** - Show configuration directory
 - **`help`** - Show available commands and usage
 - **`version`** - Show CLL version information
+- **`configure`** - Run interactive configuration wizard
+- **`config`** - Show configuration directory location
 - **`clear`** - Clear the console screen
-- **`quit` / `exit`** - Exit the console
+- **`cmd <command>`** - Execute shell command and process output in current mode
+- **`quit` / `exit`** - Exit CLL
 
 ## Dependencies
 

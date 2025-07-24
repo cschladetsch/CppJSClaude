@@ -31,13 +31,13 @@ print_header() {
 # Function to print step descriptions
 print_step() {
     echo -e "${YELLOW}➤ $1${NC}"
-    sleep 0.3
+    sleep 0.1
 }
 
 # Function to print command being executed
 print_command() {
     echo -e "${GREEN}$ $1${NC}"
-    sleep 0.2
+    sleep 0.1
 }
 
 # Function to send command to CLL and show output
@@ -49,7 +49,7 @@ send_command() {
     print_command "$cmd"
     
     # Send command with timeout and capture output
-    echo "$cmd" | timeout 5s "$CLL_BINARY" 2>/dev/null | tail -n +9 | head -n -2 || true
+    echo "$ckd" | timeout 5s "$CLL_BINARY" 2>/dev/null | tail -n +9 | head -n -2 || true
     
     sleep $DEMO_DELAY
 }
@@ -65,12 +65,18 @@ demo_config() {
 
 # Function to demonstrate JavaScript functionality
 demo_javascript() {
-    print_header "JAVASCRIPT INTEGRATION"
+    print_header "JAVASCRIPT INTEGRATION (φ MODE)"
     
-    send_command "js" "Switch to JavaScript mode"
-    send_command "Math.sqrt(64)" "Calculate square root"
-    send_command "shell" "Return to shell mode"
-    send_command "&Math.PI * 2" "JavaScript with & prefix"
+    print_step "Simple mode switching - just type 'js' to change the prompt"
+    send_command "js" "Type 'js' → prompt changes to φ (JavaScript mode)"
+    send_command "Math.sqrt(64)" "Now everything you type is JavaScript"
+    send_command "console.log('Hello from JavaScript!')" "Still in JavaScript mode"
+    send_command "2 + 2 * 3" "Still JavaScript"
+    send_command "sh" "Type 'sh' → prompt changes back to λ (Shell mode)"
+    
+    print_step "Single-command JavaScript prefixes"
+    send_command "&Math.PI * 2" "JavaScript with & prefix (stays in shell)"
+    send_command "&Date.now()" "Get timestamp with & prefix"
 }
 
 # Function to demonstrate shell functionality
@@ -136,27 +142,26 @@ demo_shell() {
     send_command "echo {1..5}" "Brace expansion"
     send_command "echo ~/.*rc" "Home directory expansion"
     
-    print_step "Mixed shell and JavaScript workflow"
-    send_command "echo 'Current directory:'" "Display message using shell echo"
-    send_command "&new Date().getHours()" "Get current hour using JavaScript"
-    send_command "date '+%H'" "Show current hour using shell date"
+    print_step "Three-mode workflow demonstration"
+    send_command "echo 'Starting three-mode demo'" "Shell command"
+    send_command "&Math.sqrt(16)" "JavaScript with & prefix"
+    send_command "?What is 4 squared?" "Ask Claude with ? prefix"
+    send_command "date" "Back to shell command"
 }
 
 # Function to demonstrate Claude AI integration
 demo_claude() {
-    print_header "CLAUDE AI INTEGRATION DEMO"
+    print_header "CLAUDE AI INTEGRATION (θ MODE)"
     
-    print_step "Testing Claude AI integration with ? prefix"
-    echo -e "${BLUE}[INFO]${NC} Claude AI integration uses ? prefix for queries"
+    print_step "Simple mode switching - just type 'ask' to change the prompt"
+    send_command "ask" "Type 'ask' → prompt changes to θ (Ask mode)" 
+    send_command "What is 7 factorial?" "Now everything you type goes to Claude"
+    send_command "Explain recursion in one sentence" "Still talking to Claude"
+    send_command "sh" "Type 'sh' → prompt changes back to λ (Shell mode)"
     
-    print_step "Basic question to Claude using ? prefix"
-    send_command "?What is 7 factorial?" "Ask Claude to calculate 7! (7 factorial)"
-    
-    print_step "Programming question using ? prefix"
-    send_command "?Explain the difference between let and const in JavaScript in one sentence" "Ask Claude about JavaScript concepts"
-    
-    print_step "Mathematical computation using ? prefix"
-    send_command "?What is the square root of 144?" "Ask Claude for mathematical calculation"
+    print_step "Single-command Ask prefixes"  
+    send_command "?What is the square root of 144?" "Ask Claude with ? prefix (stays in shell)"
+    send_command "?What is 2+2?" "Simple math question with ? prefix"
 }
 
 # Function to demonstrate built-in commands
@@ -178,11 +183,14 @@ demo_advanced() {
     print_step "Error handling demonstration"
     send_command "nonexistent_command_12345" "Try to execute a non-existent command"
     
-    print_step "Mixed mode demonstration"
-    echo -e "${BLUE}[INFO]${NC} Combining shell commands, JavaScript, and built-ins:"
-    send_command "echo 'System info:'" "Shell command"
-    send_command "&Date.now()" "JavaScript timestamp"
-    send_command "pwd" "Current directory"
+    print_step "Three-mode demonstration - watch the prompt change!"
+    echo -e "${BLUE}[INFO]${NC} The prompt tells you what mode you're in - just type the mode name:"
+    send_command "js" "λ → φ (now JavaScript mode)"
+    send_command "Math.pow(2, 8)" "Everything is JavaScript now"
+    send_command "ask" "φ → θ (now Ask mode)"  
+    send_command "What is 256 in binary?" "Everything goes to Claude now"
+    send_command "sh" "θ → λ (back to Shell mode)"
+    send_command "echo 'Back in shell'" "Everything is shell commands again"
 }
 
 # Function to show system information
@@ -338,14 +346,14 @@ main_demo() {
     # Conclusion
     print_header "DEMO COMPLETE"
     
-    echo -e "${GREEN}✓ Built-in Commands${NC} - help, version, configure, config, clear, quit/exit"
-    echo -e "${GREEN}✓ Shell Integration${NC} - Execute any shell command with timing (zsh-like interface)"
-    echo -e "${GREEN}✓ JavaScript Integration${NC} - & prefix for JavaScript injection"  
-    echo -e "${GREEN}✓ Claude AI Integration${NC} - ? prefix for Claude queries"
-    echo -e "${GREEN}✓ Configuration${NC} - ~/.config/cll/ and ~/.config/shared/ management"
-    echo -e "${GREEN}✓ V8 JavaScript Engine${NC} - Real JavaScript execution with V8"
-    echo -e "${GREEN}✓ Error Handling${NC} - Graceful error messages and recovery"
-    echo -e "${GREEN}✓ Performance Monitoring${NC} - Execution timing for all commands"
+    echo -e "${GREEN}✓ Three-Mode System${NC} - Shell (λ), JavaScript (φ), Ask (θ) modes"
+    echo -e "${GREEN}✓ Easy Mode Switching${NC} - 'sh', 'js', 'ask' commands"
+    echo -e "${GREEN}✓ Single-Command Prefixes${NC} - & for JavaScript, ? for Claude questions"  
+    echo -e "${GREEN}✓ Shell Integration${NC} - Full zsh-like shell with timing and pipes"
+    echo -e "${GREEN}✓ JavaScript Engine${NC} - V8 integration with Math, Date, console"
+    echo -e "${GREEN}✓ Claude AI Integration${NC} - Natural language question answering"
+    echo -e "${GREEN}✓ Built-in Commands${NC} - help, version, configure, config, clear, quit"
+    echo -e "${GREEN}✓ Performance Monitoring${NC} - Precise execution timing for all commands"
     echo ""
     echo -e "${WHITE}🎉 CLL (Claude Command Line) Demo Complete! 🎉${NC}"
     echo ""
@@ -373,15 +381,15 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "  --slow         Run demo with longer delays (3s instead of 2s)"
     echo ""
     echo "This script demonstrates all features of CLL including:"
-    echo "  • Built-in command system (help, version, configure, config)"
+    echo "  • Three-mode system: Shell (λ), JavaScript (φ), Ask (θ)"
+    echo "  • Easy mode switching: 'sh', 'js', 'ask' commands"
+    echo "  • Single-command prefixes: & for JS, ? for Claude"
     echo "  • Comprehensive zsh-like shell integration"
-    echo "  • JavaScript integration with & prefix"
-    echo "  • Claude AI integration with ? prefix"
-    echo "  • Configuration management (configure command)"
+    echo "  • V8 JavaScript engine with Math, Date, console"
+    echo "  • Claude AI integration for natural language queries"
+    echo "  • Built-in commands (help, version, configure, config)"
     echo "  • File operations, pipes, and text processing"
-    echo "  • Environment variables and command substitution"
-    echo "  • Globbing patterns and brace expansion"
-    echo "  • Error handling and performance monitoring"
+    echo "  • Performance monitoring with precise timing"
     echo ""
     echo "The demo runs in human-readable time with explanations between each step."
     exit 0

@@ -221,7 +221,9 @@ private:
         }
         
         if (console_->IsJavaScriptMode()) {
-            return "\033[1;33mjs> \033[0m";  // Yellow for JavaScript
+            return "\033[1;33mφ \033[0m";  // Yellow for JavaScript
+        } else if (console_->IsAskMode()) {
+            return "\033[1;35mθ \033[0m";  // Magenta for Ask
         } else {
             return "\033[1;36mλ \033[0m";  // Cyan lambda for shell
         }
