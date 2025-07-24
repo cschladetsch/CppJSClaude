@@ -138,9 +138,10 @@ TEST_F(UtilitiesTest, SplitCommandSpecialCharacters) {
     EXPECT_EQ(words[2], "--include='*.cpp'");
     
     auto words2 = ClaudeConsole::SplitCommand("echo \"hello world\"");
-    ASSERT_EQ(words2.size(), 2);
+    ASSERT_EQ(words2.size(), 3);
     EXPECT_EQ(words2[0], "echo");
     EXPECT_EQ(words2[1], "\"hello");
+    EXPECT_EQ(words2[2], "world\"");
     // Note: This simple split doesn't handle quoted strings specially
 }
 
@@ -148,9 +149,9 @@ TEST_F(UtilitiesTest, SplitCommandSpecialCharacters) {
 TEST_F(UtilitiesTest, SplitCommandLongInput) {
     std::string longCommand = "very long command with many many many arguments";
     auto words = ClaudeConsole::SplitCommand(longCommand);
-    EXPECT_EQ(words.size(), 9);
+    EXPECT_EQ(words.size(), 8);
     EXPECT_EQ(words[0], "very");
-    EXPECT_EQ(words[8], "arguments");
+    EXPECT_EQ(words[7], "arguments");
 }
 
 // Test execution time formatting precision

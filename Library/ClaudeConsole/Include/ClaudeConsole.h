@@ -93,6 +93,7 @@ private:
     OutputCallback outputCallback_;
     OutputCallback errorCallback_;
     
+public:
     // Claude integration helpers
     bool CheckClaudeAvailability();
     std::string FindPyClaudeCliPath();

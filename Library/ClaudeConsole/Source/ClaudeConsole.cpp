@@ -14,7 +14,7 @@ namespace cll {
 
 ClaudeConsole::ClaudeConsole()
     : mode_(ConsoleMode::Shell), multiLineMode_(MultiLineMode::None),
-      promptFormat_("❯ "), claudePrompt_("? "), claudePromptColor_("orange") {
+      promptFormat_("❯ [{mode}] "), claudePrompt_("? "), claudePromptColor_("orange") {
     
     // Create config directory if it doesn't exist
     CreateConfigDirectory();
@@ -57,30 +57,49 @@ CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
         return {true, "", "", std::chrono::microseconds(0), 0};
     }
     
+    // Trim whitespace for consistent command handling
+    std::string trimmed = command;
+    // Remove leading whitespace
+    size_t start = trimmed.find_first_not_of(" \t\n\r");
+    if (start != std::string::npos) {
+        trimmed = trimmed.substr(start);
+    } else {
+        trimmed.clear();
+    }
+    // Remove trailing whitespace
+    size_t end = trimmed.find_last_not_of(" \t\n\r");
+    if (end != std::string::npos) {
+        trimmed = trimmed.substr(0, end + 1);
+    }
+    
+    if (trimmed.empty()) {
+        return {true, "", "", std::chrono::microseconds(0), 0};
+    }
+    
     // Check for mode switch commands
-    if (command == "js" || command == "javascript") {
+    if (trimmed == "js" || trimmed == "javascript") {
         SetMode(ConsoleMode::JavaScript);
         return {true, "Switched to JavaScript mode", "", std::chrono::microseconds(0), 0};
-    } else if (command == "shell" || command == "sh") {
+    } else if (trimmed == "shell" || trimmed == "sh") {
         SetMode(ConsoleMode::Shell);
         return {true, "Switched to Shell mode", "", std::chrono::microseconds(0), 0};
     }
     
     // Check for JavaScript lines starting with &
-    if (!command.empty() && command[0] == '&') {
-        if (command.length() == 1) {
+    if (!trimmed.empty() && trimmed[0] == '&') {
+        if (trimmed.length() == 1) {
             // Just '&' pressed - start multi-line JavaScript mode
             StartMultiLineMode(MultiLineMode::JavaScript);
             return {true, "Multi-line JavaScript mode (Ctrl-D to execute)", "", std::chrono::microseconds(0), 0};
         } else {
             // '&' with content - execute immediately
-            std::string jsCode = command.substr(1);
+            std::string jsCode = trimmed.substr(1);
             return ExecuteJavaScript(jsCode);
         }
     }
     
     // Check for ask lines
-    auto words = SplitCommand(command);
+    auto words = SplitCommand(trimmed);
     if (!words.empty() && words[0] == "ask") {
         if (words.size() == 1) {
             // Just 'ask' pressed - start multi-line ask mode
@@ -88,21 +107,21 @@ CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
             return {true, "Multi-line ask mode (Ctrl-D to send to Claude)", "", std::chrono::microseconds(0), 0};
         } else {
             // 'ask' with content - execute immediately
-            std::string question = command.substr(4); // Remove "ask "
+            std::string question = trimmed.substr(4); // Remove "ask "
             return ExecuteClaudeQuery(question);
         }
     }
     
     // Handle built-in commands
-    if (IsBuiltinCommand(command)) {
-        return ExecuteBuiltinCommand(command);
+    if (IsBuiltinCommand(trimmed)) {
+        return ExecuteBuiltinCommand(trimmed);
     }
     
     // Execute based on mode
     if (mode_ == ConsoleMode::JavaScript) {
-        return ExecuteJavaScript(command);
+        return ExecuteJavaScript(trimmed);
     } else {
-        return ExecuteShellCommand(command);
+        return ExecuteShellCommand(trimmed);
     }
 }
 
