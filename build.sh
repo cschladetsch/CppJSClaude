@@ -110,20 +110,30 @@ init_submodules() {
     fi
     
     # Add rang submodule if not exists
-    if [ ! -d "external/rang" ]; then
+    if [ ! -d "External/rang" ]; then
         print_status "Adding rang submodule for colored terminal output..."
-        git submodule add https://github.com/agauniyal/rang.git external/rang
+        git submodule add https://github.com/agauniyal/rang.git External/rang
     fi
     
     # Add minimal boost headers if not exists
-    if [ ! -d "external/boost" ]; then
-        print_status "Adding boost submodule for additional utilities..."
-        git submodule add --depth 1 https://github.com/boostorg/boost.git external/boost
-        cd external/boost
-        git submodule update --init --recursive --depth 1 tools/build
-        git submodule update --init --recursive --depth 1 libs/system
-        git submodule update --init --recursive --depth 1 libs/filesystem
-        git submodule update --init --recursive --depth 1 libs/program_options
+    if [ ! -d "External/boost" ]; then
+        print_status "Adding minimal boost submodule for essential utilities..."
+        git submodule add --depth 1 https://github.com/boostorg/boost.git External/boost
+        cd External/boost
+        
+        # Only initialize essential boost libraries
+        print_status "Initializing only required boost components..."
+        git submodule update --init --depth 1 tools/build
+        git submodule update --init --depth 1 tools/cmake
+        git submodule update --init --depth 1 libs/config
+        git submodule update --init --depth 1 libs/core
+        git submodule update --init --depth 1 libs/system
+        git submodule update --init --depth 1 libs/filesystem
+        
+        # Optional: Only if needed for console features
+        # git submodule update --init --depth 1 libs/program_options
+        # git submodule update --init --depth 1 libs/algorithm
+        
         cd ../..
     fi
     
@@ -251,11 +261,30 @@ show_build_info() {
     fi
 }
 
+# Function to show colored banner
+show_banner() {
+    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║${NC}                                                                              ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}  ${GREEN}██████╗██╗     ██╗         ██████╗ ██╗   ██╗██╗██╗     ██████╗${NC}           ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}  ${GREEN}██╔════╝██║     ██║         ██╔══██╗██║   ██║██║██║     ██╔══██╗${NC}          ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}  ${GREEN}██║     ██║     ██║         ██████╔╝██║   ██║██║██║     ██║  ██║${NC}          ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}  ${GREEN}██║     ██║     ██║         ██╔══██╗██║   ██║██║██║     ██║  ██║${NC}          ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}  ${GREEN}╚██████╗███████╗███████╗    ██████╔╝╚██████╔╝██║███████╗██████╔╝${NC}          ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}  ${GREEN}╚═════╝╚══════╝╚══════╝    ╚═════╝  ╚═════╝ ╚═╝╚══════╝╚═════╝${NC}           ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}                                                                              ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}                    ${YELLOW}Claude Command Line - Build System${NC}                    ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}                         ${GREEN}High-Performance C++20${NC}                           ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}                                                                              ${BLUE}║${NC}"
+    echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+}
+
 # Main script logic
 main() {
     local command=${1:-release}
     
-    echo "=== $PROJECT_NAME Build Script ==="
+    show_banner
+    echo -e "${GREEN}=== $PROJECT_NAME Build Script ===${NC}"
     echo ""
     
     case "$command" in
@@ -272,7 +301,7 @@ main() {
             build_project "Debug"
             show_build_info
             ;;
-        "release")
+        "release"|"")
             check_prerequisites
             clean_build
             configure_cmake "Release"

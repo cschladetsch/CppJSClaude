@@ -1,14 +1,14 @@
 # Binary Directory
 
-This directory contains the compiled executables and output binaries for the CppV8-Claude Integration project.
+This directory contains the compiled executables and output binaries for the CLL (Claude Command Line) project.
 
 ## Generated Files
 
-### v8_claude_console
+### cll
 **Main interactive console application**
 
 - **Purpose**: Interactive terminal application with Claude AI integration
-- **Usage**: `./v8_claude_console`
+- **Usage**: `./cll`
 - **Features**:
   - Full-featured terminal interface with readline support
   - Colored output and professional UI
@@ -46,17 +46,17 @@ This directory contains the compiled executables and output binaries for the Cpp
 mkdir build && cd build
 cmake ..
 make
-# Binaries will be in ../bin/
+# Binaries will be in ../Bin/
 ```
 
 ### Manual Compilation
 ```bash
 # Main console application
-g++ -std=c++20 -I../include ../src/main.cpp ../src/ClaudeConsole.cpp -lreadline -o v8_claude_console
+g++ -std=c++20 -I../Include ../Source/Main.cpp -lClaudeConsole -o cll
 
 # Demo programs
-g++ -std=c++20 -I../include ../demo.cpp ../src/ClaudeConsole.cpp -o demo
-g++ -std=c++20 -I../include ../enhanced_demo.cpp ../src/ClaudeConsole.cpp -o enhanced_demo
+g++ -std=c++20 -I../Include ../demo.cpp -lClaudeConsole -o demo
+g++ -std=c++20 -I../Include ../enhanced_demo.cpp -lClaudeConsole -o enhanced_demo
 ```
 
 ## Runtime Requirements
@@ -73,42 +73,42 @@ g++ -std=c++20 -I../include ../enhanced_demo.cpp ../src/ClaudeConsole.cpp -o enh
 
 ## Usage Guide
 
-### Interactive Console (`v8_claude_console`)
+### Interactive Console (`cll`)
 
 #### Starting the Console
 ```bash
-$ ./v8_claude_console
+$ ./cll
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║                    V8 JavaScript Engine with Claude AI Integration           ║
+║                         CLL (Claude Command Line)                           ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 Type 'help' for available commands, 'ask <question>' to query Claude AI
 Use 'js' to switch to JavaScript mode, 'shell' for shell mode
 
-[sh] λ 
+❯ 
 ```
 
 #### Basic Commands
 ```bash
-[sh] λ help                              # Show available commands
-[sh] λ ask What is 2+2?                  # Query Claude AI
-[sh] λ ls -la                            # Execute shell command
-[sh] λ &Math.sqrt(64)                    # Execute JavaScript with & prefix
-[sh] λ js                                # Switch to JavaScript mode
-[js] λ console.log("Hello World!")       # Execute JavaScript
-[js] λ shell                             # Switch back to shell mode
-[sh] λ clear                             # Clear screen
-[sh] λ quit                              # Exit console
+❯ help                              # Show available commands
+❯ ask What is 2+2?                  # Query Claude AI
+❯ ls -la                            # Execute shell command
+❯ &Math.sqrt(64)                    # Execute JavaScript with & prefix
+❯ js                                # Switch to JavaScript mode
+[js] ❯ console.log("Hello World!")       # Execute JavaScript
+[js] ❯ shell                             # Switch back to shell mode
+❯ clear                             # Clear screen
+❯ quit                              # Exit console
 ```
 
 #### Advanced Features
 ```bash
 # Mixed workflow example
-[sh] λ echo "Current directory:"
-[sh] λ pwd
-[sh] λ &new Date().toISOString()         # Get current time via JavaScript
-[sh] λ ask What's the weather like?
-[sh] λ &Math.random() * 100              # Generate random number
+❯ echo "Current directory:"
+❯ pwd
+❯ &new Date().toISOString()         # Get current time via JavaScript
+❯ ask What's the weather like?
+❯ &Math.random() * 100              # Generate random number
 ```
 
 ### Demo Programs
@@ -116,7 +116,7 @@ Use 'js' to switch to JavaScript mode, 'shell' for shell mode
 #### Basic Demo
 ```bash
 $ ./demo
-=== CppV8-Claude Integration Demo ===
+=== CLL (Claude Command Line) Demo ===
 
 1. Testing help command:
 Available commands:
@@ -132,7 +132,7 @@ Switched to JavaScript mode
 #### Enhanced Demo
 ```bash
 $ ./enhanced_demo
-=== Enhanced CppV8-Claude Integration Demo ===
+=== Enhanced CLL (Claude Command Line) Demo ===
 
 3. Testing & prefix for JavaScript execution in shell mode:
 Console is in shell mode, executing JavaScript with & prefix:
@@ -165,8 +165,8 @@ JavaScript (&Math.sqrt(64)): // JavaScript execution simulated
 #### "Command not found" errors
 ```bash
 # Check if binary exists and is executable
-ls -la v8_claude_console
-chmod +x v8_claude_console
+ls -la cll
+chmod +x cll
 ```
 
 #### Claude AI not working
@@ -180,7 +180,7 @@ ls ../PyClaudeCli/main.py
 #### Readline not working
 ```bash
 # Check if readline was linked during compilation
-ldd v8_claude_console | grep readline
+ldd cll | grep readline
 # If not found, install readline development libraries
 sudo apt-get install libreadline-dev  # Ubuntu/Debian
 brew install readline                  # macOS
@@ -188,7 +188,7 @@ brew install readline                  # macOS
 
 #### Execution permission denied
 ```bash
-chmod +x v8_claude_console
+chmod +x cll
 chmod +x demo
 chmod +x enhanced_demo
 ```
@@ -198,10 +198,10 @@ chmod +x enhanced_demo
 #### Verbose Execution
 ```bash
 # Enable detailed output (if supported)
-./v8_claude_console --verbose
+./cll --verbose
 
 # Check system capabilities
-./v8_claude_console --check-system
+./cll --check-system
 ```
 
 #### Performance Profiling
@@ -210,10 +210,10 @@ chmod +x enhanced_demo
 time ./demo
 
 # Memory usage monitoring
-valgrind --tool=memcheck ./v8_claude_console
+valgrind --tool=memcheck ./cll
 
 # Strace for system call analysis
-strace -o trace.log ./v8_claude_console
+strace -o trace.log ./cll
 ```
 
 ## Distribution
@@ -221,14 +221,14 @@ strace -o trace.log ./v8_claude_console
 ### Packaging
 ```bash
 # Create distribution package
-tar -czf cppv8-claude-integration.tar.gz v8_claude_console demo enhanced_demo
+tar -czf cll.tar.gz cll demo enhanced_demo
 
 # Create installer script
 cat > install.sh << 'EOF'
 #!/bin/bash
-install -m 755 v8_claude_console /usr/local/bin/
-install -m 755 demo /usr/local/bin/cppv8-demo
-install -m 755 enhanced_demo /usr/local/bin/cppv8-enhanced-demo
+install -m 755 cll /usr/local/bin/
+install -m 755 demo /usr/local/bin/cll-demo
+install -m 755 enhanced_demo /usr/local/bin/cll-enhanced-demo
 EOF
 ```
 
@@ -238,11 +238,11 @@ EOF
 export PATH=$PATH:/path/to/bin
 
 # Create desktop entry (Linux)
-cat > ~/.local/share/applications/v8-claude-console.desktop << 'EOF'
+cat > ~/.local/share/applications/cll.desktop << 'EOF'
 [Desktop Entry]
-Name=V8 Claude Console
+Name=CLL (Claude Command Line)
 Comment=Interactive console with Claude AI integration
-Exec=/path/to/bin/v8_claude_console
+Exec=/path/to/bin/cll
 Terminal=true
 Type=Application
 Category=Development

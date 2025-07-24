@@ -7,7 +7,7 @@
 #include <memory>
 #include <functional>
 
-namespace claude_console {
+namespace cll {
 
 // Command result structure
 struct CommandResult {
@@ -22,6 +22,13 @@ struct CommandResult {
 enum class ConsoleMode {
     Shell,
     JavaScript
+};
+
+// Multi-line input mode
+enum class MultiLineMode {
+    None,
+    JavaScript,
+    Ask
 };
 
 // Main console class with Claude AI integration
@@ -45,6 +52,14 @@ public:
     ConsoleMode GetMode() const { return mode_; }
     bool IsJavaScriptMode() const { return mode_ == ConsoleMode::JavaScript; }
     
+    // Multi-line input management
+    bool IsInMultiLineMode() const { return multiLineMode_ != MultiLineMode::None; }
+    MultiLineMode GetMultiLineMode() const { return multiLineMode_; }
+    void StartMultiLineMode(MultiLineMode mode);
+    void EndMultiLineMode();
+    void AppendMultiLineInput(const std::string& line);
+    CommandResult ExecuteMultiLineInput();
+    
     // Built-in commands
     bool IsBuiltinCommand(const std::string& command) const;
     CommandResult ExecuteBuiltinCommand(const std::string& command);
@@ -65,7 +80,15 @@ protected:
 
 private:
     ConsoleMode mode_;
+    MultiLineMode multiLineMode_;
+    std::string multiLineBuffer_;
     std::map<std::string, std::string> builtinCommands_;
+    std::map<std::string, std::string> aliases_;
+    
+    // Configuration
+    std::string promptFormat_;
+    std::string claudePrompt_;
+    std::string claudePromptColor_;
     
     OutputCallback outputCallback_;
     OutputCallback errorCallback_;
@@ -81,12 +104,14 @@ private:
     void SaveConfiguration();
     std::string GetConfigPath() const;
     
-    // Aliases
+    // Alias management
     void SetAlias(const std::string& name, const std::string& value);
     std::string ExpandAlias(const std::string& command) const;
     
-    // Member variables for aliases
-    std::map<std::string, std::string> aliases_;
+    // Prompt management
+    std::string GetPrompt() const;
+    std::string GetMultiLinePrompt() const;
+    std::string GetClaudePrompt() const;
 };
 
 // History management
@@ -109,4 +134,4 @@ private:
     int position_;
 };
 
-} // namespace claude_console
+} // namespace cll

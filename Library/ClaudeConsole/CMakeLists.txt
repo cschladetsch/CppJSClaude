@@ -19,13 +19,13 @@ target_include_directories(ClaudeConsole
 target_compile_features(ClaudeConsole PUBLIC cxx_std_20)
 
 # Add external dependencies
-if(EXISTS ${CMAKE_SOURCE_DIR}/external/rang/include)
-    target_include_directories(ClaudeConsole PRIVATE ${CMAKE_SOURCE_DIR}/external/rang/include)
+if(EXISTS ${CMAKE_SOURCE_DIR}/External/rang/include)
+    target_include_directories(ClaudeConsole PRIVATE ${CMAKE_SOURCE_DIR}/External/rang/include)
     target_compile_definitions(ClaudeConsole PRIVATE HAS_RANG)
 endif()
 
-if(EXISTS ${CMAKE_SOURCE_DIR}/external/boost)
-    target_include_directories(ClaudeConsole PRIVATE ${CMAKE_SOURCE_DIR}/external/boost)
+if(EXISTS ${CMAKE_SOURCE_DIR}/External/boost)
+    target_include_directories(ClaudeConsole PRIVATE ${CMAKE_SOURCE_DIR}/External/boost)
     target_compile_definitions(ClaudeConsole PRIVATE HAS_BOOST)
 endif()
 

@@ -24,6 +24,13 @@ enum class ConsoleMode {
     JavaScript
 };
 
+// Multi-line input mode
+enum class MultiLineMode {
+    None,
+    JavaScript,
+    Ask
+};
+
 // Main console class with Claude AI integration
 class ClaudeConsole {
 public:
@@ -45,6 +52,14 @@ public:
     ConsoleMode GetMode() const { return mode_; }
     bool IsJavaScriptMode() const { return mode_ == ConsoleMode::JavaScript; }
     
+    // Multi-line input management
+    bool IsInMultiLineMode() const { return multiLineMode_ != MultiLineMode::None; }
+    MultiLineMode GetMultiLineMode() const { return multiLineMode_; }
+    void StartMultiLineMode(MultiLineMode mode);
+    void EndMultiLineMode();
+    void AppendMultiLineInput(const std::string& line);
+    CommandResult ExecuteMultiLineInput();
+    
     // Built-in commands
     bool IsBuiltinCommand(const std::string& command) const;
     CommandResult ExecuteBuiltinCommand(const std::string& command);
@@ -57,6 +72,21 @@ public:
     using OutputCallback = std::function<void(const std::string&)>;
     void SetOutputCallback(OutputCallback callback) { outputCallback_ = callback; }
     void SetErrorCallback(OutputCallback callback) { errorCallback_ = callback; }
+    
+    // Configuration management
+    void CreateConfigDirectory();
+    void LoadConfiguration();
+    void SaveConfiguration();
+    std::string GetConfigPath() const;
+    
+    // Alias management
+    void SetAlias(const std::string& name, const std::string& value);
+    std::string ExpandAlias(const std::string& command) const;
+    
+    // Prompt management
+    std::string GetPrompt() const;
+    std::string GetMultiLinePrompt() const;
+    std::string GetClaudePrompt() const;
 
 protected:
     // Output handling
@@ -65,7 +95,15 @@ protected:
 
 private:
     ConsoleMode mode_;
+    MultiLineMode multiLineMode_;
+    std::string multiLineBuffer_;
     std::map<std::string, std::string> builtinCommands_;
+    std::map<std::string, std::string> aliases_;
+    
+    // Configuration
+    std::string promptFormat_;
+    std::string claudePrompt_;
+    std::string claudePromptColor_;
     
     OutputCallback outputCallback_;
     OutputCallback errorCallback_;
@@ -74,19 +112,6 @@ private:
     bool CheckClaudeAvailability();
     std::string FindPyClaudeCliPath();
     CommandResult ExecuteSubprocess(const std::string& command);
-    
-    // Configuration management
-    void CreateConfigDirectory();
-    void LoadConfiguration();
-    void SaveConfiguration();
-    std::string GetConfigPath() const;
-    
-    // Aliases
-    void SetAlias(const std::string& name, const std::string& value);
-    std::string ExpandAlias(const std::string& command) const;
-    
-    // Member variables for aliases
-    std::map<std::string, std::string> aliases_;
 };
 
 // History management

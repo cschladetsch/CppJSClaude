@@ -8,7 +8,7 @@
 #include <readline/history.h>
 #endif
 
-using namespace claude_console;
+using namespace cll;
 
 class ConsoleUI {
 public:
@@ -36,8 +36,15 @@ public:
             char* line = readline(prompt.c_str());
             if (!line) {
                 // EOF (Ctrl+D)
-                std::cout << "\nGoodbye!\n";
-                break;
+                if (console_->IsInMultiLineMode()) {
+                    // Execute multi-line input on Ctrl+D
+                    auto result = console_->ExecuteMultiLineInput();
+                    ProcessResult(result);
+                    continue;
+                } else {
+                    std::cout << "\nGoodbye!\n";
+                    break;
+                }
             }
             
             input = std::string(line);
@@ -50,12 +57,30 @@ public:
             std::cout << prompt;
             if (!std::getline(std::cin, input)) {
                 // EOF
-                std::cout << "\nGoodbye!\n";
-                break;
+                if (console_->IsInMultiLineMode()) {
+                    // Execute multi-line input on Ctrl+D
+                    auto result = console_->ExecuteMultiLineInput();
+                    ProcessResult(result);
+                    continue;
+                } else {
+                    std::cout << "\nGoodbye!\n";
+                    break;
+                }
             }
 #endif
             
-            if (input.empty()) continue;
+            if (input.empty()) {
+                if (console_->IsInMultiLineMode()) {
+                    console_->AppendMultiLineInput("");
+                }
+                continue;
+            }
+            
+            // Handle multi-line mode
+            if (console_->IsInMultiLineMode()) {
+                console_->AppendMultiLineInput(input);
+                continue;
+            }
             
             // Check for exit commands
             if (input == "quit" || input == "exit") {
@@ -88,13 +113,15 @@ private:
     }
     
     std::string GetPrompt() {
-        std::string modeIndicator = (console_->GetMode() == ConsoleMode::JavaScript) ? "js" : "sh";
-        return std::string("\033[36m[") + modeIndicator + "]\033[0m λ ";
+        return console_->GetPrompt();
     }
     
     void ProcessCommand(const std::string& input) {
         auto result = console_->ExecuteCommand(input);
-        
+        ProcessResult(result);
+    }
+    
+    void ProcessResult(const CommandResult& result) {
         if (!result.output.empty()) {
             std::cout << result.output;
             if (result.output.back() != '\n') {

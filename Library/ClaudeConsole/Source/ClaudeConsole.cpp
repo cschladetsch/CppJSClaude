@@ -10,10 +10,11 @@
 
 namespace fs = std::filesystem;
 
-namespace claude_console {
+namespace cll {
 
 ClaudeConsole::ClaudeConsole()
-    : mode_(ConsoleMode::Shell) {
+    : mode_(ConsoleMode::Shell), multiLineMode_(MultiLineMode::None),
+      promptFormat_("❯ "), claudePrompt_("? "), claudePromptColor_("orange") {
     
     // Create config directory if it doesn't exist
     CreateConfigDirectory();
@@ -65,6 +66,33 @@ CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
         return {true, "Switched to Shell mode", "", std::chrono::microseconds(0), 0};
     }
     
+    // Check for JavaScript lines starting with &
+    if (!command.empty() && command[0] == '&') {
+        if (command.length() == 1) {
+            // Just '&' pressed - start multi-line JavaScript mode
+            StartMultiLineMode(MultiLineMode::JavaScript);
+            return {true, "Multi-line JavaScript mode (Ctrl-D to execute)", "", std::chrono::microseconds(0), 0};
+        } else {
+            // '&' with content - execute immediately
+            std::string jsCode = command.substr(1);
+            return ExecuteJavaScript(jsCode);
+        }
+    }
+    
+    // Check for ask lines
+    auto words = SplitCommand(command);
+    if (!words.empty() && words[0] == "ask") {
+        if (words.size() == 1) {
+            // Just 'ask' pressed - start multi-line ask mode
+            StartMultiLineMode(MultiLineMode::Ask);
+            return {true, "Multi-line ask mode (Ctrl-D to send to Claude)", "", std::chrono::microseconds(0), 0};
+        } else {
+            // 'ask' with content - execute immediately
+            std::string question = command.substr(4); // Remove "ask "
+            return ExecuteClaudeQuery(question);
+        }
+    }
+    
     // Handle built-in commands
     if (IsBuiltinCommand(command)) {
         return ExecuteBuiltinCommand(command);
@@ -74,10 +102,6 @@ CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
     if (mode_ == ConsoleMode::JavaScript) {
         return ExecuteJavaScript(command);
     } else {
-        // In shell mode, check for & prefix for JavaScript
-        if (!command.empty() && command[0] == '&') {
-            return ExecuteJavaScript(command.substr(1));
-        }
         return ExecuteShellCommand(command);
     }
 }
@@ -333,7 +357,9 @@ void ClaudeConsole::CreateConfigDirectory() {
             std::ofstream config(configFile);
             config << "{\n";
             config << "  \"default_mode\": \"shell\",\n";
-            config << "  \"prompt_format\": \"[{mode}] λ \",\n";
+            config << "  \"prompt_format\": \"❯ \",\n";
+            config << "  \"claude_prompt\": \"? \",\n";
+            config << "  \"claude_prompt_color\": \"orange\",\n";
             config << "  \"show_execution_time\": true,\n";
             config << "  \"history_size\": 1000,\n";
             config << "  \"enable_colors\": true,\n";
@@ -408,10 +434,10 @@ std::string ClaudeConsole::GetConfigPath() const {
     }
     
     if (home) {
-        return std::string(home) + "/.config/claude-console";
+        return std::string(home) + "/.config/cll";
     }
     
-    return ".claude-console"; // Fallback to current directory
+    return ".cll"; // Fallback to current directory
 }
 
 void ClaudeConsole::SetAlias(const std::string& name, const std::string& value) {
@@ -448,6 +474,78 @@ void ClaudeConsole::Error(const std::string& text) {
     } else {
         std::cerr << text;
     }
+}
+
+// Multi-line input methods
+void ClaudeConsole::StartMultiLineMode(MultiLineMode mode) {
+    multiLineMode_ = mode;
+    multiLineBuffer_.clear();
+}
+
+void ClaudeConsole::EndMultiLineMode() {
+    multiLineMode_ = MultiLineMode::None;
+    multiLineBuffer_.clear();
+}
+
+void ClaudeConsole::AppendMultiLineInput(const std::string& line) {
+    if (!multiLineBuffer_.empty()) {
+        multiLineBuffer_ += "\n";
+    }
+    multiLineBuffer_ += line;
+}
+
+CommandResult ClaudeConsole::ExecuteMultiLineInput() {
+    CommandResult result;
+    
+    if (multiLineMode_ == MultiLineMode::JavaScript) {
+        result = ExecuteJavaScript(multiLineBuffer_);
+    } else if (multiLineMode_ == MultiLineMode::Ask) {
+        result = ExecuteClaudeQuery(multiLineBuffer_);
+    } else {
+        result.success = false;
+        result.error = "Not in multi-line mode";
+        result.exitCode = 1;
+    }
+    
+    // Clear multi-line state after execution
+    EndMultiLineMode();
+    
+    return result;
+}
+
+// Prompt methods
+std::string ClaudeConsole::GetPrompt() const {
+    if (multiLineMode_ != MultiLineMode::None) {
+        return GetMultiLinePrompt();
+    }
+    
+    std::string prompt = promptFormat_;
+    
+    // Replace {mode} placeholder
+    std::string modeStr = (mode_ == ConsoleMode::JavaScript) ? "js" : "sh";
+    size_t pos = prompt.find("{mode}");
+    if (pos != std::string::npos) {
+        prompt.replace(pos, 6, modeStr);
+    }
+    
+    return prompt;
+}
+
+std::string ClaudeConsole::GetMultiLinePrompt() const {
+    switch (multiLineMode_) {
+        case MultiLineMode::JavaScript:
+            return "  ...js> ";
+        case MultiLineMode::Ask:
+            return GetClaudePrompt();
+        default:
+            return promptFormat_;
+    }
+}
+
+std::string ClaudeConsole::GetClaudePrompt() const {
+    // For now, return simple orange-colored prompt
+    // In a full implementation with rang, this would use actual colors
+    return claudePrompt_;
 }
 
 // CommandHistory implementation
@@ -505,4 +603,4 @@ std::string CommandHistory::GetNext() {
     }
 }
 
-} // namespace claude_console
+} // namespace cll
