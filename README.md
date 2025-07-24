@@ -291,16 +291,45 @@ CLL is designed for high performance and low latency:
 - **Memory Usage**: ~2-5MB base footprint
 - **Configuration Load**: <10ms
 
+## Documentation
+
+### 📚 Complete Documentation Suite
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Comprehensive development guide
+- **[CHANGELOG.md](CHANGELOG.md)** - Detailed project evolution history  
+- **[LICENSE](LICENSE)** - MIT License with dependency information
+- **[Library Documentation](Library/ClaudeConsole/README.md)** - Complete API reference
+- **[Build Documentation](Bin/README.md)** - Binary and deployment guide
+- **[Tools Documentation](Tools/README.md)** - Demo and development tools
+
+### 🔧 Component Documentation
+
+- **[Source Code](Source/README.md)** - Implementation architecture details
+- **[Headers](Include/README.md)** - Legacy API reference (use Library instead)
+- **[External Dependencies](External/README.md)** - Third-party library information
+- **[Test Suite](Tests/)** - Comprehensive testing framework
+
 ## Contributing
 
+We welcome contributions! Please see **[CONTRIBUTING.md](CONTRIBUTING.md)** for detailed guidelines.
+
+**Quick Start:**
 1. **Fork** the repository
 2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Follow** C++20 standards and existing code style
-4. **Test** with both shell and JavaScript modes
-5. **Update** documentation for API changes
-6. **Commit** changes (`git commit -m 'Add amazing feature'`)
-7. **Push** to branch (`git push origin feature/amazing-feature`)
-8. **Open** a Pull Request
+3. **Follow** [C++20 coding standards](CONTRIBUTING.md#coding-standards)
+4. **Test** thoroughly with `./test.sh`
+5. **Update** documentation for changes
+6. **Create** demos for new features
+7. **Submit** a Pull Request
+
+**Development Setup:**
+```bash
+git clone https://github.com/cschladetsch/CppV8ClaudeIntegration.git
+cd CppV8ClaudeIntegration
+./build.sh deps  # Initialize dependencies
+./build.sh       # Build project
+./test.sh        # Run tests
+```
 
 ## License
 

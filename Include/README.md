@@ -1,11 +1,13 @@
 # Include Directory
 
-This directory contains the header files that define the public API and interfaces for the CppV8-Claude Integration project.
+This directory contains the header files that define the public API and interfaces for the CLL (Claude Command Line) project.
+
+⚠️ **Note**: This directory contains legacy headers. The active API is now in `Library/ClaudeConsole/Include/`
 
 ## Files Overview
 
 ### ClaudeConsole.h
-**Main header defining the console interface and data structures**
+**Legacy header defining the console interface (moved to Library)**
 
 ## Public API Reference
 
@@ -15,7 +17,7 @@ This directory contains the header files that define the public API and interfac
 **Main console class with Claude AI integration**
 
 ```cpp
-namespace claude_console {
+namespace cll {
     class ClaudeConsole {
     public:
         ClaudeConsole();
@@ -123,7 +125,7 @@ using OutputCallback = std::function<void(const std::string&)>;
 ```cpp
 #include "ClaudeConsole.h"
 
-claude_console::ClaudeConsole console;
+cll::ClaudeConsole console;
 if (!console.Initialize()) {
     // Handle initialization error
     return false;
@@ -158,7 +160,7 @@ result = console.ExecuteCommand("ask What is the meaning of life?");
 ### Mode Management
 ```cpp
 // Switch to JavaScript mode
-console.SetMode(claude_console::ConsoleMode::JavaScript);
+console.SetMode(cll::ConsoleMode::JavaScript);
 auto result = console.ExecuteCommand("Math.PI * 2");
 
 // Check current mode
@@ -169,7 +171,7 @@ if (console.IsJavaScriptMode()) {
 
 ### Command History
 ```cpp
-claude_console::CommandHistory history;
+cll::CommandHistory history;
 history.Add("ls -la");
 history.Add("ask Hello Claude");
 
@@ -251,3 +253,65 @@ struct ConsoleConfig {
 void LoadConfig(const std::string& configPath);
 void SaveConfig(const std::string& configPath) const;
 ```
+
+## Current Implementation Status
+
+✅ **Implemented Features:**
+- **Namespace Update**: Now uses `cll` namespace
+- **Configuration System**: JSON config in `~/.config/cll/`
+- **Library Architecture**: Active implementation in `Library/ClaudeConsole/Include/`
+- **Multi-line Support**: JavaScript and Claude AI multi-line input
+- **Comprehensive Testing**: Full GTest suite integration
+
+📍 **Active Development:**
+- **Main Headers**: Now in `Library/ClaudeConsole/Include/ClaudeConsole.h`
+- **Modern C++20**: Updated with latest language features
+- **Enhanced API**: Extended functionality in library version
+
+## Demo and API Testing
+
+### API Usage Demonstrations
+
+Generate demos showing header usage:
+
+```bash
+# From project root - automated API demo
+./Tools/write-demo.sh
+
+# Manual API-focused demo
+./Tools/demo_screengif.sh
+
+# Show demo options
+./Tools/write-demo.sh --help
+```
+
+### Testing Header Compatibility
+
+```bash
+# Run header-specific tests
+../test.sh --filter "*Header*"
+
+# API integration tests
+../test.sh --filter "*API*"
+
+# Comprehensive test suite
+../test.sh
+```
+
+## Migration Guide
+
+**Moving from legacy Include/ to Library/ClaudeConsole/Include/:**
+
+```cpp
+// Old (legacy)
+#include "Include/ClaudeConsole.h"
+using namespace claude_console;
+
+// New (library)
+#include "Library/ClaudeConsole/Include/ClaudeConsole.h"
+using namespace cll;
+```
+
+**Updated Configuration Path:**
+- **Old**: `~/.config/claude-console/`
+- **New**: `~/.config/cll/`

@@ -5,9 +5,11 @@ This directory contains the core implementation of the CLL (Claude Command Line)
 ## Files Overview
 
 ### ClaudeConsole.cpp
-**Core console implementation with Claude AI integration**
+**Legacy core console implementation (moved to Library)**
 
-- **Purpose**: Main console engine that handles command execution, mode switching, and Claude AI integration
+⚠️ **Note**: This file is legacy code. The active implementation is now in `Library/ClaudeConsole/Source/ClaudeConsole.cpp`
+
+- **Purpose**: Original console engine prototype (kept for reference)
 - **Key Features**:
   - Hybrid shell/JavaScript execution modes
   - Built-in command processing (`help`, `ask`, `clear`, etc.)
@@ -116,10 +118,54 @@ CommandResult ExecuteJavaScript(const std::string& code) {
 - **Subprocess Overhead**: Minimal overhead for shell command execution
 - **Buffer Management**: Fixed-size buffers for subprocess communication
 
+## Current Implementation Status
+
+✅ **Completed Features:**
+- **Configuration System**: JSON config in `~/.config/cll/`
+- **Library Architecture**: Modular ClaudeConsole library
+- **Comprehensive Testing**: GTest integration with `./test.sh`
+- **Build System**: CMake with external dependencies
+- **Demo System**: Automated GIF generation tools
+
+📍 **Active Development:**
+- **Main Implementation**: Now in `Library/ClaudeConsole/`
+- **Static Library**: Reusable ClaudeConsole component
+- **Modern C++20**: Updated architecture and features
+
+## Demo and Testing
+
+### Creating Source Code Demos
+
+Generate demonstrations of the source architecture:
+
+```bash
+# From project root - automated demo creation
+./Tools/write-demo.sh
+
+# Manual demo with source code focus
+./Tools/demo_screengif.sh
+
+# Show all demo options
+./Tools/write-demo.sh --help
+```
+
+### Testing Source Implementation
+
+```bash
+# Run comprehensive test suite
+../test.sh
+
+# Test specific components
+../test.sh --filter "*Console*"
+
+# Performance testing
+../test.sh --verbose
+```
+
 ## Future Enhancements
 
 1. **Real V8 Integration**: Replace simulated JavaScript with actual V8 engine
 2. **Async Execution**: Non-blocking command execution for long-running tasks
 3. **Plugin System**: Dynamic loading of additional commands
-4. **Configuration Files**: User-customizable settings and aliases
+4. **Advanced Configuration**: Enhanced user customization
 5. **Multi-threading**: Parallel execution of independent commands
