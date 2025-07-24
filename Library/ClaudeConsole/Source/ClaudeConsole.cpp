@@ -8,13 +8,26 @@
 #include <chrono>
 #include <fstream>
 
+#ifdef HAS_V8
+#include "DllLoader.h"
+#include "V8Compat.h"
+#include <libplatform/libplatform.h>
+#endif
+
 namespace fs = std::filesystem;
 
 namespace cll {
 
+// Static instance for V8 callbacks
+ClaudeConsole* ClaudeConsole::instance_ = nullptr;
+
 ClaudeConsole::ClaudeConsole()
     : mode_(ConsoleMode::Shell), multiLineMode_(MultiLineMode::None),
-      promptFormat_("❯ [{mode}] "), claudePrompt_("? "), claudePromptColor_("orange") {
+      promptFormat_("❯ [{mode}] "), claudePrompt_("? "), claudePromptColor_("orange")
+#ifdef HAS_V8
+      , platform_(nullptr), isolate_(nullptr)
+#endif
+{
     
     // Create config directory if it doesn't exist
     CreateConfigDirectory();
@@ -43,13 +56,62 @@ ClaudeConsole::~ClaudeConsole() {
 }
 
 bool ClaudeConsole::Initialize() {
-    // For this simplified version, just return true
-    // In a full implementation, this would initialize V8
+#ifdef HAS_V8
+    // Set static instance for callbacks
+    instance_ = this;
+    
+    // Initialize V8 platform
+    v8::V8::InitializeICUDefaultLocation("");
+    v8::V8::InitializeExternalStartupData("");
+    platform_ = v8_compat::CreateDefaultPlatform();
+    v8::V8::InitializePlatform(platform_.get());
+    v8::V8::Initialize();
+    
+    // Create a new Isolate
+    v8::Isolate::CreateParams create_params;
+    create_params.array_buffer_allocator = 
+        v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+    isolate_ = v8::Isolate::New(create_params);
+    
+    if (!isolate_) {
+        return false;
+    }
+    
+    // Create V8 context
+    {
+        v8::Isolate::Scope isolate_scope(isolate_);
+        v8::HandleScope handle_scope(isolate_);
+        
+        v8::Local<v8::Context> context = v8::Context::New(isolate_);
+        context_.Reset(isolate_, context);
+        
+        // Enter context scope before registering builtins
+        v8::Context::Scope context_scope(context);
+        
+        // Register built-in functions
+        RegisterBuiltins(context);
+    }
+    
+    // Initialize DLL loader
+    dllLoader_ = std::make_unique<DllLoader>();
+#endif
+    
     return true;
 }
 
 void ClaudeConsole::Shutdown() {
-    // Cleanup resources
+#ifdef HAS_V8
+    if (!isolate_) return;
+    
+    // Clean up V8
+    context_.Reset();
+    isolate_->Dispose();
+    isolate_ = nullptr;
+    v8::V8::Dispose();
+    
+    // Clear instance
+    instance_ = nullptr;
+#endif
 }
 
 CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
@@ -98,6 +160,19 @@ CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
         }
     }
     
+    // Check for Claude AI queries starting with ?
+    if (!trimmed.empty() && trimmed[0] == '?') {
+        if (trimmed.length() == 1) {
+            // Just '?' pressed - start multi-line ask mode
+            StartMultiLineMode(MultiLineMode::Ask);
+            return {true, "Multi-line Claude AI mode (Ctrl-D to execute)", "", std::chrono::microseconds(0), 0};
+        } else {
+            // '?' with content - execute immediately
+            std::string question = trimmed.substr(1);
+            return ExecuteClaudeQuery(question);
+        }
+    }
+    
     // Check for ask lines
     auto words = SplitCommand(trimmed);
     if (!words.empty() && words[0] == "ask") {
@@ -126,17 +201,20 @@ CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
 }
 
 CommandResult ClaudeConsole::ExecuteJavaScript(const std::string& code) {
-    // For this demo, we'll just simulate JavaScript execution
-    // In a full implementation, this would use V8
-    
     auto startTime = std::chrono::high_resolution_clock::now();
     
     CommandResult result;
+#ifdef HAS_V8
+    result.success = ExecuteString(code, "<repl>");
+#else
+    // Simulate JavaScript execution when V8 is not available
     result.success = true;
-    result.output = std::format("// JavaScript execution simulated\n// Code: {}", code);
+    result.output = std::format("// JavaScript execution simulated (V8 not available)\n// Code: {}\n", code);
+#endif
+    
     result.executionTime = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::high_resolution_clock::now() - startTime);
-    result.exitCode = 0;
+    result.exitCode = result.success ? 0 : 1;
     
     return result;
 }
@@ -412,6 +490,10 @@ void ClaudeConsole::CreateConfigDirectory() {
 }
 
 void ClaudeConsole::LoadConfiguration() {
+    // First load shared configuration
+    LoadSharedConfiguration();
+    
+    // Then load app-specific configuration
     std::string configFile = GetConfigPath() + "/config.json";
     if (fs::exists(configFile)) {
         // TODO: Parse JSON configuration
@@ -456,7 +538,38 @@ std::string ClaudeConsole::GetConfigPath() const {
         return std::string(home) + "/.config/cll";
     }
     
-    return ".cll"; // Fallback to current directory
+    return "./.config/cll"; // Fallback to current directory
+}
+
+std::string ClaudeConsole::GetSharedConfigPath() const {
+    const char* home = std::getenv("HOME");
+    if (!home) {
+        home = std::getenv("USERPROFILE"); // Windows fallback
+    }
+    
+    if (home) {
+        return std::string(home) + "/.config/shared";
+    }
+    
+    return "./.config/shared"; // Fallback to current directory
+}
+
+void ClaudeConsole::LoadSharedConfiguration() {
+    std::string sharedAliasFile = GetSharedConfigPath() + "/aliases";
+    if (fs::exists(sharedAliasFile)) {
+        std::ifstream file(sharedAliasFile);
+        std::string line;
+        while (std::getline(file, line)) {
+            if (line.empty() || line[0] == '#') continue;
+            
+            size_t eq = line.find('=');
+            if (eq != std::string::npos) {
+                std::string name = line.substr(0, eq);
+                std::string value = line.substr(eq + 1);
+                SetAlias(name, value);
+            }
+        }
+    }
 }
 
 void ClaudeConsole::SetAlias(const std::string& name, const std::string& value) {
@@ -566,6 +679,346 @@ std::string ClaudeConsole::GetClaudePrompt() const {
     // In a full implementation with rang, this would use actual colors
     return claudePrompt_;
 }
+
+#ifdef HAS_V8
+// V8 JavaScript execution methods
+bool ClaudeConsole::ExecuteFile(const std::string& path) {
+    std::string source = ReadFile(path);
+    if (source.empty()) {
+        Error(std::format("Error: Could not read file: \"{}\"\n", path));
+        return false;
+    }
+    
+    return ExecuteString(source, path);
+}
+
+bool ClaudeConsole::ExecuteString(const std::string& source, const std::string& name) {
+    if (!isolate_) return false;
+    
+    v8::Isolate::Scope isolate_scope(isolate_);
+    v8::HandleScope handle_scope(isolate_);
+    v8::Local<v8::Context> context = context_.Get(isolate_);
+    v8::Context::Scope context_scope(context);
+    
+    return CompileAndRun(source, name);
+}
+
+bool ClaudeConsole::CompileAndRun(const std::string& source, const std::string& name) {
+    v8::HandleScope handle_scope(isolate_);
+    v8::Local<v8::Context> context = context_.Get(isolate_);
+    v8::Context::Scope context_scope(context);
+    
+    v8::TryCatch tryCatch(isolate_);
+    
+    // Compile the script
+    v8::Local<v8::String> sourceV8 = v8::String::NewFromUtf8(isolate_, source.c_str()).ToLocalChecked();
+    v8::Local<v8::String> nameV8 = v8::String::NewFromUtf8(isolate_, name.c_str()).ToLocalChecked();
+    
+    v8::ScriptOrigin origin = v8_compat::CreateScriptOrigin(isolate_, nameV8);
+    v8::Local<v8::Script> script;
+    if (!v8::Script::Compile(context, sourceV8, &origin).ToLocal(&script)) {
+        ReportException(&tryCatch);
+        return false;
+    }
+    
+    // Run the script
+    v8::Local<v8::Value> result;
+    if (!script->Run(context).ToLocal(&result)) {
+        ReportException(&tryCatch);
+        return false;
+    }
+    
+    // Print result in REPL mode
+    if (name == "<repl>" && !result->IsUndefined()) {
+        PrintResult(result);
+    }
+    
+    return true;
+}
+
+std::string ClaudeConsole::ReadFile(const std::string& path) {
+    std::ifstream file(path, std::ios::binary);
+    if (file) {
+        return std::string(std::istreambuf_iterator<char>(file), 
+                          std::istreambuf_iterator<char>());
+    }
+    return "";
+}
+
+void ClaudeConsole::ReportException(v8::TryCatch* tryCatch) {
+    v8::HandleScope handle_scope(isolate_);
+    v8::String::Utf8Value exception(isolate_, tryCatch->Exception());
+    const char* exception_string = *exception ? *exception : "Error: <unknown exception>";
+    
+    v8::Local<v8::Message> message = tryCatch->Message();
+    if (message.IsEmpty()) {
+        // V8 didn't provide any extra information about this error; just print the exception
+        Error(std::format("{}\n", exception_string));
+    } else {
+        // Print (filename):(line number): (message).
+        v8::String::Utf8Value filename(isolate_, message->GetScriptOrigin().ResourceName());
+        v8::Local<v8::Context> context(isolate_->GetCurrentContext());
+        const char* filename_string = *filename ? *filename : "<unknown>";
+        int linenum = message->GetLineNumber(context).FromMaybe(-1);
+        Error(std::format("{}:{}: {}\n", filename_string, linenum, exception_string));
+        
+        // Print line of source code.
+        v8::String::Utf8Value sourceline(isolate_, message->GetSourceLine(context).ToLocalChecked());
+        const char* sourceline_string = *sourceline ? *sourceline : " ";
+        Error(std::format("{}\n", sourceline_string));
+        
+        // Print wavy underline
+        int start = message->GetStartColumn(context).FromMaybe(0);
+        for (int i = 0; i < start; i++) {
+            Error(" ");
+        }
+        int end = message->GetEndColumn(context).FromMaybe(0);
+        for (int i = start; i < end; i++) {
+            Error("^");
+        }
+        Error("\n");
+        
+        v8::Local<v8::Value> stack_trace_string;
+        if (tryCatch->StackTrace(context).ToLocal(&stack_trace_string) &&
+            stack_trace_string->IsString() &&
+            v8::Local<v8::String>::Cast(stack_trace_string)->Length() > 0) {
+            v8::String::Utf8Value stack_trace(isolate_, stack_trace_string);
+            const char* stack_trace_string_value = *stack_trace ? *stack_trace : " ";
+            Error(std::format("{}\n", stack_trace_string_value));
+        }
+    }
+}
+
+void ClaudeConsole::PrintResult(v8::Local<v8::Value> value) {
+    v8::HandleScope handle_scope(isolate_);
+    v8::Local<v8::Context> context = context_.Get(isolate_);
+    
+    // Convert result to string
+    v8::String::Utf8Value str(isolate_, value->ToString(context).ToLocalChecked());
+    const char* cstr = *str ? *str : "<string conversion failed>";
+    Output(std::format("{}\n", cstr));
+}
+
+// DLL loading methods
+bool ClaudeConsole::LoadDll(const std::string& path) {
+    if (!dllLoader_ || !isolate_) return false;
+    
+    v8::Isolate::Scope isolate_scope(isolate_);
+    v8::HandleScope handle_scope(isolate_);
+    v8::Local<v8::Context> context = context_.Get(isolate_);
+    v8::Context::Scope context_scope(context);
+    
+    Output(std::format("Loading DLL: {}\n", path));
+    if (dllLoader_->LoadDll(path, isolate_, context)) {
+        Output(std::format("✓ Successfully loaded: {}\n", path));
+        return true;
+    } else {
+        Error(std::format("✗ Failed to load: {}\n", path));
+        return false;
+    }
+}
+
+bool ClaudeConsole::UnloadDll(const std::string& path) {
+    if (!dllLoader_) return false;
+    
+    if (dllLoader_->UnloadDll(path)) {
+        Output(std::format("Unloaded DLL: {}\n", path));
+        return true;
+    }
+    return false;
+}
+
+bool ClaudeConsole::ReloadDll(const std::string& path) {
+    if (!dllLoader_ || !isolate_) return false;
+    
+    v8::Isolate::Scope isolate_scope(isolate_);
+    v8::HandleScope handle_scope(isolate_);
+    v8::Local<v8::Context> context = context_.Get(isolate_);
+    v8::Context::Scope context_scope(context);
+    
+    return dllLoader_->ReloadDll(path, isolate_, context);
+}
+
+std::vector<std::string> ClaudeConsole::GetLoadedDlls() const {
+    if (!dllLoader_) return {};
+    return dllLoader_->GetLoadedDlls();
+}
+
+// V8 built-in functions
+void ClaudeConsole::RegisterBuiltins(v8::Local<v8::Context> context) {
+    v8::HandleScope handle_scope(isolate_);
+    
+    // Get the global object
+    v8::Local<v8::Object> global = context->Global();
+    
+    // Register print function
+    global->Set(context,
+        v8::String::NewFromUtf8(isolate_, "print").ToLocalChecked(),
+        v8::FunctionTemplate::New(isolate_, Print)->GetFunction(context).ToLocalChecked());
+    
+    // Register load function
+    global->Set(context,
+        v8::String::NewFromUtf8(isolate_, "load").ToLocalChecked(),
+        v8::FunctionTemplate::New(isolate_, Load)->GetFunction(context).ToLocalChecked());
+    
+    // Register DLL functions
+    global->Set(context,
+        v8::String::NewFromUtf8(isolate_, "loadDll").ToLocalChecked(),
+        v8::FunctionTemplate::New(isolate_, LoadDllFunc)->GetFunction(context).ToLocalChecked());
+        
+    global->Set(context,
+        v8::String::NewFromUtf8(isolate_, "unloadDll").ToLocalChecked(),
+        v8::FunctionTemplate::New(isolate_, UnloadDllFunc)->GetFunction(context).ToLocalChecked());
+        
+    global->Set(context,
+        v8::String::NewFromUtf8(isolate_, "reloadDll").ToLocalChecked(),
+        v8::FunctionTemplate::New(isolate_, ReloadDllFunc)->GetFunction(context).ToLocalChecked());
+        
+    global->Set(context,
+        v8::String::NewFromUtf8(isolate_, "listDlls").ToLocalChecked(),
+        v8::FunctionTemplate::New(isolate_, ListDllsFunc)->GetFunction(context).ToLocalChecked());
+        
+    // Register utility functions
+    global->Set(context,
+        v8::String::NewFromUtf8(isolate_, "quit").ToLocalChecked(),
+        v8::FunctionTemplate::New(isolate_, QuitFunc)->GetFunction(context).ToLocalChecked());
+        
+    global->Set(context,
+        v8::String::NewFromUtf8(isolate_, "help").ToLocalChecked(),
+        v8::FunctionTemplate::New(isolate_, HelpFunc)->GetFunction(context).ToLocalChecked());
+}
+
+void ClaudeConsole::Print(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    if (!instance_) return;
+    
+    bool first = true;
+    for (int i = 0; i < args.Length(); i++) {
+        v8::HandleScope handle_scope(args.GetIsolate());
+        if (first) {
+            first = false;
+        } else {
+            instance_->Output(" ");
+        }
+        v8::String::Utf8Value str(args.GetIsolate(), args[i]);
+        const char* cstr = *str ? *str : "<string conversion failed>";
+        instance_->Output(cstr);
+    }
+    instance_->Output("\n");
+}
+
+void ClaudeConsole::Load(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    if (!instance_ || args.Length() < 1) return;
+    
+    v8::HandleScope handle_scope(args.GetIsolate());
+    v8::String::Utf8Value file(args.GetIsolate(), args[0]);
+    const char* filename = *file ? *file : "";
+    
+    bool success = instance_->ExecuteFile(filename);
+    args.GetReturnValue().Set(v8::Boolean::New(args.GetIsolate(), success));
+}
+
+void ClaudeConsole::LoadDllFunc(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    if (!instance_ || args.Length() < 1) return;
+    
+    v8::HandleScope handle_scope(args.GetIsolate());
+    v8::String::Utf8Value path(args.GetIsolate(), args[0]);
+    const char* dllPath = *path ? *path : "";
+    
+    bool success = instance_->LoadDll(dllPath);
+    args.GetReturnValue().Set(v8::Boolean::New(args.GetIsolate(), success));
+}
+
+void ClaudeConsole::UnloadDllFunc(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    if (!instance_ || args.Length() < 1) return;
+    
+    v8::HandleScope handle_scope(args.GetIsolate());
+    v8::String::Utf8Value path(args.GetIsolate(), args[0]);
+    const char* dllPath = *path ? *path : "";
+    
+    bool success = instance_->UnloadDll(dllPath);
+    args.GetReturnValue().Set(v8::Boolean::New(args.GetIsolate(), success));
+}
+
+void ClaudeConsole::ReloadDllFunc(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    if (!instance_ || args.Length() < 1) return;
+    
+    v8::HandleScope handle_scope(args.GetIsolate());
+    v8::String::Utf8Value path(args.GetIsolate(), args[0]);
+    const char* dllPath = *path ? *path : "";
+    
+    bool success = instance_->ReloadDll(dllPath);
+    args.GetReturnValue().Set(v8::Boolean::New(args.GetIsolate(), success));
+}
+
+void ClaudeConsole::ListDllsFunc(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    if (!instance_) return;
+    
+    v8::HandleScope handle_scope(args.GetIsolate());
+    v8::Isolate* isolate = args.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    
+    auto dlls = instance_->GetLoadedDlls();
+    v8::Local<v8::Array> result = v8::Array::New(isolate, dlls.size());
+    
+    for (size_t i = 0; i < dlls.size(); ++i) {
+        v8::Local<v8::String> str = v8::String::NewFromUtf8(isolate, dlls[i].c_str()).ToLocalChecked();
+        result->Set(context, i, str);
+    }
+    
+    args.GetReturnValue().Set(result);
+}
+
+void ClaudeConsole::QuitFunc(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    if (!instance_) return;
+    instance_->Output("Goodbye!\n");
+    // Note: Actual exit should be handled by the main loop
+}
+
+void ClaudeConsole::HelpFunc(const v8::FunctionCallbackInfo<v8::Value>& args) {
+    if (!instance_) return;
+    
+    instance_->Output("Available JavaScript functions:\n");
+    instance_->Output("  print(...) - Print values to console\n");
+    instance_->Output("  load(file) - Load and execute JavaScript file\n");
+    instance_->Output("  loadDll(path) - Load a native DLL\n");
+    instance_->Output("  unloadDll(path) - Unload a DLL\n");
+    instance_->Output("  reloadDll(path) - Reload a DLL\n");
+    instance_->Output("  listDlls() - List loaded DLLs\n");
+    instance_->Output("  quit() - Exit console\n");
+    instance_->Output("  help() - Show this help\n");
+}
+
+#else
+// Stub implementations when V8 is not available
+bool ClaudeConsole::ExecuteFile(const std::string& path) {
+    Output(std::format("JavaScript file execution not available (V8 not built): {}\n", path));
+    return false;
+}
+
+bool ClaudeConsole::ExecuteString(const std::string& source, const std::string& name) {
+    Output(std::format("JavaScript execution not available (V8 not built)\n"));
+    return false;
+}
+
+bool ClaudeConsole::LoadDll(const std::string& path) {
+    Output(std::format("DLL loading not available (V8 not built): {}\n", path));
+    return false;
+}
+
+bool ClaudeConsole::UnloadDll(const std::string& path) {
+    Output(std::format("DLL unloading not available (V8 not built): {}\n", path));
+    return false;
+}
+
+bool ClaudeConsole::ReloadDll(const std::string& path) {
+    Output(std::format("DLL reloading not available (V8 not built): {}\n", path));
+    return false;
+}
+
+std::vector<std::string> ClaudeConsole::GetLoadedDlls() const {
+    return {};
+}
+#endif
 
 // CommandHistory implementation
 CommandHistory::CommandHistory(size_t maxSize) 

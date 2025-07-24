@@ -74,9 +74,13 @@ CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
     if (mode_ == ConsoleMode::JavaScript) {
         return ExecuteJavaScript(command);
     } else {
-        // In shell mode, check for & prefix for JavaScript
+        // In shell mode, check for special prefixes
         if (!command.empty() && command[0] == '&') {
+            // & prefix for JavaScript
             return ExecuteJavaScript(command.substr(1));
+        } else if (!command.empty() && command[0] == '?') {
+            // ? prefix for Claude AI queries
+            return ExecuteClaudeQuery(command.substr(1));
         }
         return ExecuteShellCommand(command);
     }
@@ -367,6 +371,10 @@ void ClaudeConsole::CreateConfigDirectory() {
 }
 
 void ClaudeConsole::LoadConfiguration() {
+    // First load shared configuration
+    LoadSharedConfiguration();
+    
+    // Then load app-specific configuration
     std::string configFile = GetConfigPath() + "/config.json";
     if (fs::exists(configFile)) {
         // TODO: Parse JSON configuration
@@ -384,6 +392,37 @@ void ClaudeConsole::LoadConfiguration() {
                     std::string value = line.substr(eq + 1);
                     SetAlias(name, value);
                 }
+            }
+        }
+    }
+}
+
+std::string ClaudeConsole::GetSharedConfigPath() const {
+    const char* home = std::getenv("HOME");
+    if (!home) {
+        home = std::getenv("USERPROFILE"); // Windows fallback
+    }
+    
+    if (home) {
+        return std::string(home) + "/.config/shared";
+    }
+    
+    return "./.config/shared"; // Fallback to current directory
+}
+
+void ClaudeConsole::LoadSharedConfiguration() {
+    std::string sharedAliasFile = GetSharedConfigPath() + "/aliases";
+    if (fs::exists(sharedAliasFile)) {
+        std::ifstream file(sharedAliasFile);
+        std::string line;
+        while (std::getline(file, line)) {
+            if (line.empty() || line[0] == '#') continue;
+            
+            size_t eq = line.find('=');
+            if (eq != std::string::npos) {
+                std::string name = line.substr(0, eq);
+                std::string value = line.substr(eq + 1);
+                SetAlias(name, value);
             }
         }
     }
@@ -408,10 +447,10 @@ std::string ClaudeConsole::GetConfigPath() const {
     }
     
     if (home) {
-        return std::string(home) + "/.config/claude-console";
+        return std::string(home) + "/.config/cll";
     }
     
-    return ".claude-console"; // Fallback to current directory
+    return "./.config/cll"; // Fallback to current directory
 }
 
 void ClaudeConsole::SetAlias(const std::string& name, const std::string& value) {

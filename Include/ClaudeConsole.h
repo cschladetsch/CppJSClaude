@@ -76,8 +76,10 @@ public:
     // Configuration management
     void CreateConfigDirectory();
     void LoadConfiguration();
+    void LoadSharedConfiguration();
     void SaveConfiguration();
     std::string GetConfigPath() const;
+    std::string GetSharedConfigPath() const;
     
     // Alias management
     void SetAlias(const std::string& name, const std::string& value);

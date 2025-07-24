@@ -1,0 +1,81 @@
+# ConfigPromptManager Library
+
+Version: @PROJECT_VERSION@
+
+A shared C++ library for managing configuration files and prompt templates across multiple applications.
+
+## Features
+
+- **Configuration Management**: Load/save JSON configurations with type safety
+- **Alias System**: Command alias expansion and management
+- **Prompt Templates**: Flexible prompt template system with variable substitution
+- **Cross-Platform**: Works on Linux, macOS, and Windows
+- **Thread-Safe**: Safe for multi-threaded applications
+
+## Quick Start
+
+```cpp
+#include "ConfigPromptManager.h"
+
+// Create manager
+auto manager = config_prompt::CreateConfigPromptManager();
+
+// Initialize
+manager->Initialize();
+
+// Load configuration
+manager->LoadConfiguration();
+
+// Set an alias
+manager->SetAlias("ll", "ls -la");
+
+// Expand aliases in commands
+std::string expanded = manager->ExpandAlias("ll /home");
+
+// Generate prompts
+std::string prompt = manager->GetShellPrompt("shell");
+```
+
+## Integration
+
+Add to your CMakeLists.txt:
+
+```cmake
+find_package(ConfigPromptManager REQUIRED)
+target_link_libraries(your_target ConfigPromptManager)
+```
+
+## Configuration File Format
+
+The library uses JSON configuration files stored in `~/.config/app-name/`:
+
+```json
+{
+  "default_mode": "shell",
+  "prompt_format": "[{mode}] λ ",
+  "show_execution_time": true,
+  "aliases": {
+    "ll": "ls -la",
+    "cls": "clear"
+  }
+}
+```
+
+## Prompt Templates
+
+Create reusable prompt templates:
+
+```json
+{
+  "name": "git_commit",
+  "template": "git commit -m \"{message}\"", 
+  "description": "Create git commit with message",
+  "variables": {
+    "message": "Commit message"
+  }
+}
+```
+
+## License
+
+See LICENSE file in the project root.

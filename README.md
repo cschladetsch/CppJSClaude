@@ -2,22 +2,23 @@
 
 <img src="Resources/Title.png" alt="CLL Title" width="400" height="auto">
 
-A high-performance C++20 command-line interface that seamlessly integrates Claude AI capabilities with shell commands and JavaScript execution. CLL provides a modern, p10k-inspired interactive console experience.
+A high-performance C++20 command-line interface that provides a zsh-like interactive shell with integrated V8 JavaScript engine and Claude AI capabilities. CLL offers a modern, feature-rich console experience combining the best of shell commands, JavaScript execution, and AI-powered assistance.
 
 ## Features
 
-- **🤖 Claude AI Integration**: Built-in `ask` command for direct AI interaction
-- **⚡ JavaScript Execution**: Execute JavaScript code with `&` prefix or dedicated mode
-- **🐚 Shell Integration**: Full shell command support with execution timing
-- **🎨 P10k-Style Prompts**: Configurable, modern terminal prompts
-- **📋 Configuration System**: JSON-based config with aliases in `~/.config/cll/`
+- **🐚 Zsh-Like Interface**: Full shell command support with advanced features (globbing, pipes, redirection)
+- **⚡ V8 JavaScript Engine**: Real JavaScript execution with `&` prefix injection
+- **🤖 Claude AI Integration**: Built-in AI queries with `?` prefix 
+- **🎨 Modern Terminal**: Configurable prompts with colored output
+- **📋 Shared Configuration**: Cross-application config in `~/.config/cll/` and `~/.config/shared/`
+- **🔧 Smart Dependencies**: Intelligent CMake submodule management
 - **🏗️ Library Architecture**: Modular design with reusable ClaudeConsole library
-- **🔧 Built-in Commands**: Comprehensive command system with help, config, and mode switching
+- **🔥 DLL Hot-Loading**: Dynamic library loading and reloading capabilities
 
 ## Quick Start
 
 ```bash
-# Build and run demo (installs dependencies and demonstrates features)
+# Build and run comprehensive demo (installs dependencies and shows all features)
 ./demo.sh
 
 # Or build manually
@@ -26,321 +27,384 @@ A high-performance C++20 command-line interface that seamlessly integrates Claud
 # Run CLL
 ./Bin/cll
 
-# Use the ask command with configurable prompt
-❯ ask "What is the capital of France?"
+# Use Claude AI with ? prefix
+❯ ?What is the capital of France?
 
-# Switch to JavaScript mode  
+# Execute JavaScript with & prefix  
+❯ &Math.sqrt(64)
+8
+
+# Switch to JavaScript mode
 ❯ js
 [js] ❯ console.log("Hello World!");
+Hello World
 
-# Execute JavaScript from shell mode using & prefix
-❯ &Math.sqrt(64)
+# Run configuration wizard
+❯ configure
 
-# Switch back to shell mode
-[js] ❯ shell
-❯ ls -la
+# Execute any shell command with timing
+❯ ls -la | grep README
+-rw-r--r-- 1 user user 12543 Nov 24 10:30 README.md
+[Executed in 2.1ms]
 ```
 
 ## Architecture
 
-CLL uses a modern library-based architecture:
-
-1. **ClaudeConsole Library**: Core C++20 static library providing console functionality
-2. **Subprocess Integration**: Claude AI integration via PyClaudeCli subprocess execution
-3. **Configuration Management**: JSON-based config system in `~/.config/cll/`
-4. **Command Processing**: Built-in commands with shell and JavaScript mode switching
-5. **Performance Monitoring**: Microsecond-precision execution timing for all commands
+CLL uses a modern library-based architecture with V8 JavaScript engine integration:
 
 ```
 CLL Architecture:
 ┌─────────────────┐    ┌────────────────────┐    ┌─────────────────────┐
-│  CLL Binary     │───▶│ ClaudeConsole Lib  │───▶│ External Commands   │
-│  (Main App)     │    │ (Core Engine)      │    │ (Shell/Claude AI)   │
+│  CLL Binary     │───▶│ ClaudeConsole Lib  │───▶│ V8 JavaScript       │
+│  (Main App)     │    │ (Core Engine)      │    │ Engine              │
 └─────────────────┘    └────────────────────┘    └─────────────────────┘
+                                │                           │
+                                ▼                           ▼
+                       ┌────────────────────┐    ┌─────────────────────┐
+                       │ Configuration      │    │ DLL Hot-Loading     │
+                       │ ~/.config/cll/     │    │ System              │
+                       │ ~/.config/shared/  │    │                     │
+                       └────────────────────┘    └─────────────────────┘
                                 │
                                 ▼
                        ┌────────────────────┐
-                       │ Configuration      │
-                       │ ~/.config/cll/     │
-                       │                    │
+                       │ Claude AI          │
+                       │ Integration        │
+                       │ (via Python CLI)   │
                        └────────────────────┘
 ```
 
-## Dependencies
+## Core Interface
 
-### Required
-- C++20 compatible compiler (GCC 10+, Clang 10+)
-- CMake 3.15+
-- Standard library with filesystem support
+CLL provides a zsh-like interface with special prefixes for enhanced functionality:
 
-### Optional (Auto-detected)
-- **rang**: Colored terminal output
-- **boost**: Additional utilities
-- **readline**: Enhanced input editing
+### Command Prefixes
+- **Default**: Shell commands (bash/zsh compatible)
+- **`&` prefix**: JavaScript injection (`&console.log('Hello')`)
+- **`?` prefix**: Claude AI queries (`?What is recursion?`)
 
-### Runtime
-- Python 3.x with PyCloudeCli (for Claude AI integration)
-- Standard POSIX shell environment
-
-## Built-in Commands
-
-- **`ask <question>`** - Ask Claude AI a question (configurable prompt)
+### Built-in Commands
+- **`configure`** - Run configuration wizard
 - **`js` / `javascript`** - Switch to JavaScript mode
 - **`shell` / `sh`** - Switch to shell mode  
-- **`&<code>`** - Execute JavaScript code from shell mode (& prefix)
-- **`config [alias name=value]`** - Manage configuration and aliases
-- **`reload`** - Reload configuration from files
+- **`config`** - Show configuration directory
 - **`help`** - Show available commands and usage
+- **`version`** - Show CLL version information
 - **`clear`** - Clear the console screen
 - **`quit` / `exit`** - Exit the console
 
+## Dependencies
+
+### Build Requirements
+- C++20 compatible compiler (GCC 10+, Clang 10+)
+- CMake 3.15+
+- Git (for submodule management)
+
+### Auto-Managed Dependencies
+CLL automatically fetches and builds required dependencies:
+- **V8 JavaScript Engine** (optional, builds from source or uses system package)
+- **rang**: Colored terminal output (auto-fetched)
+- **nlohmann/json**: JSON configuration (auto-fetched)
+- **readline**: Enhanced input editing (system package)
+
+### Runtime Dependencies
+- Python 3.x with claude-cli (for Claude AI integration)
+- Standard POSIX shell environment
+
 ## Configuration
 
-CLL uses a comprehensive configuration system in `~/.config/cll/`:
+CLL uses a sophisticated shared configuration system:
 
-### config.json (Main Configuration)
+### Directory Structure
+```
+~/.config/
+├── cll/                    # CLL-specific configuration
+│   ├── config.json        # Main CLL settings
+│   └── aliases            # CLL-specific aliases
+└── shared/                 # Shared configuration across applications
+    ├── prompts.json       # Shared prompt configuration
+    └── aliases            # Shared command aliases
+```
+
+### config.json (CLL Configuration)
 ```json
 {
   "default_mode": "shell",
-  "prompt_format": "❯ ",
-  "claude_prompt": "? ",
-  "claude_prompt_color": "orange",
+  "prompt_format": "λ ",
+  "claude_prompt_format": "? ",
+  "claude_prompt_color": "cyan",
   "show_execution_time": true,
   "history_size": 1000,
   "enable_colors": true,
+  "v8_integration": {
+    "enabled": true,
+    "compile_timeout_ms": 5000
+  },
   "claude_integration": {
     "enabled": true,
-    "timeout_seconds": 30
+    "timeout_seconds": 30,
+    "python_cli_path": "claude"
   }
 }
 ```
 
-### aliases (Command Aliases)
-```
-ll=ls -la
-la=ls -la
-...=cd ../..
-cls=clear
-q=quit
+### Shared Configuration (prompts.json)
+```json
+{
+  "shell_prompt": {
+    "format": "λ ",
+    "color": "cyan"
+  },
+  "javascript_prompt": {
+    "format": "[js] λ ",
+    "color": "yellow"
+  },
+  "claude_prompt": {
+    "format": "? ",
+    "color": "cyan"
+  }
+}
 ```
 
-## Usage Examples
+## JavaScript Integration
 
-### Single-line Commands
+CLL integrates the V8 JavaScript engine for real JavaScript execution:
+
+### Single-line JavaScript
 ```bash
-# Ask Claude a single question (immediate execution)
-❯ ask What is 2+2?
-Claude: 2 + 2 = 4
+# Execute JavaScript with & prefix
+❯ &Math.PI * 2
+6.283185307179586
 
-# Execute JavaScript with & prefix (immediate execution)
-❯ &Math.sqrt(64)
-// JavaScript execution simulated
-// Code: Math.sqrt(64)
+❯ &new Date().toISOString()
+2024-01-15T10:30:45.123Z
 
-# Execute shell commands with timing
-❯ ls -la
-drwxr-xr-x  8 user user  256 Oct 24 10:30 .
-[Executed in 2.1ms]
+❯ &[1,2,3,4,5].reduce((a,b) => a+b, 0)
+15
 ```
 
-### Multi-line Commands  
+### JavaScript Mode
 ```bash
-# Multi-line JavaScript (& alone + Enter, then Ctrl-D to execute)
-❯ &
-Multi-line JavaScript mode (Ctrl-D to execute)
-  ...js> console.log('Hello World');
-  ...js> const nums = [1, 2, 3, 4, 5];
-  ...js> const sum = nums.reduce((a, b) => a + b, 0);
-  ...js> console.log('Sum:', sum);
-  ...js> [Ctrl-D]
-// JavaScript execution simulated
-// Code: console.log('Hello World');
-const nums = [1, 2, 3, 4, 5];
-const sum = nums.reduce((a, b) => a + b, 0);
-console.log('Sum:', sum);
-
-# Multi-line Claude questions (ask alone + Enter, then Ctrl-D to send)
-❯ ask
-Multi-line ask mode (Ctrl-D to send to Claude)
-? Please explain:
-? 1. JavaScript promises
-? 2. Async/await syntax  
-? 3. Event loop in Node.js
-? [Ctrl-D]
-Claude: [Comprehensive multi-line response...]
-```
-
-### Mode Switching and Configuration
-```bash
-# Switch to JavaScript mode
+# Switch to persistent JavaScript context
 ❯ js
-[js] ❯ console.log("Hello World");
-Hello World
+[js] ❯ const name = "CLL";
+[js] ❯ console.log(`Hello from ${name}!`);
+Hello from CLL!
 [js] ❯ shell
-
-# Configuration management
-❯ config alias ll="ls -la"
-Alias set: ll = 'ls -la' 
-❯ ll
-drwxr-xr-x  8 user user  256 Oct 24 10:30 .
+❯ 
 ```
 
-### Command Behavior Summary
-| Command | Behavior |
-|---------|----------|
-| `&Math.sqrt(64)` | Execute JavaScript immediately |
-| `&` (alone) | Enter multi-line JavaScript mode until Ctrl-D |
-| `ask What is 2+2?` | Ask Claude immediately |
-| `ask` (alone) | Enter multi-line ask mode until Ctrl-D |
+### V8 Features
+- Full ES2020+ JavaScript support
+- Built-in console object
+- File I/O capabilities
+- DLL loading functions
+- Error handling with stack traces
+
+## Claude AI Integration
+
+CLL seamlessly integrates with Claude AI for intelligent assistance:
+
+### Single Queries
+```bash
+❯ ?What is the time complexity of quicksort?
+Claude: Quicksort has an average time complexity of O(n log n)...
+
+❯ ?Explain this code: &console.log('Hello')
+Claude: This JavaScript code uses console.log() to output...
+```
+
+### Multi-line Queries
+```bash
+❯ ?
+Multi-line Claude query mode (Ctrl-D to send)
+? Please explain the differences between:
+? 1. Promises
+? 2. Async/await  
+? 3. Callbacks
+? [Ctrl-D]
+Claude: [Comprehensive explanation...]
+```
+
+## Shell Integration
+
+CLL provides comprehensive zsh-like shell capabilities:
+
+### File Operations
+```bash
+❯ ls -la *.{cpp,h}          # Brace expansion
+❯ find . -name "*.cpp" | head -5
+❯ cat file.txt | grep "pattern" | wc -l
+❯ echo "Hello" > test.txt && cat test.txt
+```
+
+### Advanced Features
+```bash
+❯ echo {1..10}              # Brace expansion
+❯ ls **/*.cpp               # Recursive globbing
+❯ echo "Today is $(date +%A)"  # Command substitution
+❯ env | grep HOME           # Environment variables
+❯ history | tail -5         # Command history
+```
 
 ## Building
 
 ### Quick Build (Recommended)
 ```bash
-# Build with dependencies and colored banner (defaults to release)
-./build.sh
+# Build with all dependencies and run demo
+./build.sh && ./demo.sh
 
-# Run demo showcasing all features (~1 minute)
-./demo.sh
-```
-
-### Creating Demo GIFs
-
-Generate animated GIFs to showcase CLL features:
-
-```bash
-# Automated GIF generation (recommended)
-./Tools/write-demo.sh
-
-# Manual recording with ScreenToGif
-./Tools/demo_screengif.sh
-
-# Show GIF generation options
-./Tools/write-demo.sh --help
-```
-
-**Output**: `./Resources/Demo.gif` - Ready for GitHub README display
-
-**Alternative Tools:**
-- **ScreenToGif**: Download from https://www.screentogif.com/
-- **OBS Studio**: For high-quality screen recording
-- **Terminalizer**: `npm install -g terminalizer`
-
-### Manual Build
-```bash
-# Initialize submodules
-./build.sh deps
-
-# Build in release mode
-mkdir -p build && cd build
+# Configure and build manually
+mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-
-# Binary location
-./Bin/cll
+cmake --build . -j$(nproc)
 ```
 
 ### Build Options
 ```bash
 ./build.sh            # Default: optimized release build
 ./build.sh clean      # Clean all artifacts
-./build.sh debug      # Debug build with symbols
-./build.sh release    # Optimized release build (same as default)
+./build.sh debug      # Debug build with symbols  
+./build.sh release    # Optimized release build
 ./build.sh test       # Build and run tests
 ./build.sh deps       # Initialize git submodules
 ./build.sh --help     # Show all options
+```
+
+### CMake Build Options
+```bash
+# V8 JavaScript Engine Options
+cmake .. -DBUILD_V8_FROM_SOURCE=ON      # Build V8 from source
+cmake .. -DFORCE_V8_BUILD=ON            # Force V8 build even if system package exists
+cmake .. -DFETCH_ONLY_ESSENTIAL=OFF     # Fetch all dependencies including Boost
+
+# Dependency Management
+cmake .. -DAUTO_FETCH_DEPENDENCIES=ON   # Auto-fetch missing dependencies (default)
+cmake .. -DBUILD_TESTS=ON               # Enable test suite (default)
 ```
 
 ## Project Structure
 
 ```
 CppV8ClaudeIntegration/
-├── Bin/                    # Compiled binaries
-│   ├── README.md          # Binary documentation
-│   └── cll               # Main CLL executable
-├── Include/               # Public header files
-│   ├── README.md         # Header documentation
-│   └── ClaudeConsole.h   # Main library header
-├── Source/                # Source code files
-│   ├── README.md         # Source documentation
-│   ├── Main.cpp          # Application entry point
-│   └── ClaudeConsole.cpp # Legacy source (moved to Library)
-├── Library/               # Library components
-│   ├── README.md         # Library documentation
-│   └── ClaudeConsole/    # Core console library
-├── External/              # External dependencies (git submodules)
-│   ├── README.md         # Dependencies documentation
-│   ├── rang/             # Colored output library
-│   └── boost/            # Boost C++ libraries
-├── build/                 # Build artifacts (generated)
-│   └── README.md         # Build documentation
-├── build.sh              # Build script with colored banner
-├── demo.sh               # Complete functionality demo
-└── README.md             # This file
+├── Bin/                        # Compiled binaries
+│   └── cll                    # Main CLL executable
+├── Source/                     # Main application source
+│   └── Main.cpp               # Application entry point
+├── Library/                    # Core library components
+│   └── ClaudeConsole/         # ClaudeConsole library
+│       ├── Include/           # Library headers
+│       │   ├── ClaudeConsole.h
+│       │   ├── DllLoader.h
+│       │   └── V8Compat.h
+│       └── Source/            # Library implementation
+│           ├── ClaudeConsole.cpp
+│           └── DllLoader.cpp
+├── External/                   # Auto-managed dependencies
+│   ├── rang/                  # Colored output (auto-fetched)
+│   ├── json/                  # JSON library (auto-fetched)
+│   └── v8/                    # V8 engine (optional, manual setup)
+├── Tests/                      # Test suite
+├── Tools/                      # Development tools
+├── build.sh                   # Build script with dependency management
+├── demo.sh                    # Comprehensive feature demonstration
+├── CMakeLists.txt             # Main build configuration
+└── README.md                  # This file
 ```
 
 ## Performance
 
-CLL is designed for high performance and low latency:
+CLL is optimized for high performance and low latency:
 
 - **Startup Time**: ~50-100ms (cold start)
 - **Built-in Commands**: <1ms execution time
 - **Shell Commands**: ~1-2ms overhead (near-native performance)
-- **JavaScript Execution**: Instant (simulated)
+- **JavaScript Execution**: Real V8 performance (when available)
 - **Claude AI Queries**: 1-5 seconds (network dependent)
 - **Memory Usage**: ~2-5MB base footprint
 - **Configuration Load**: <10ms
+
+## Advanced Features
+
+### DLL Hot-Loading
+```bash
+[js] ❯ loadDll('/path/to/library.so')    # Load native library
+[js] ❯ reloadDll('/path/to/library.so')  # Hot-reload library
+[js] ❯ listDlls()                        # Show loaded libraries
+[js] ❯ unloadDll('/path/to/library.so')  # Unload library
+```
+
+### Configuration Wizard
+```bash
+❯ configure
+CLL Configuration Wizard
+========================
+Setting up shared configuration in ~/.config/shared/
+Setting up CLL configuration in ~/.config/cll/
+Configure Claude AI integration? [y/N]: y
+Enter Claude CLI path [claude]: claude
+Configuration complete!
+```
+
+### Mode Switching
+```bash
+❯ js                    # Enter JavaScript mode
+[js] ❯ shell           # Return to shell mode
+❯ ?Mode question       # Ask Claude about current mode
+```
 
 ## Documentation
 
 ### 📚 Complete Documentation Suite
 
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Comprehensive development guide
-- **[CHANGELOG.md](CHANGELOG.md)** - Detailed project evolution history  
-- **[LICENSE](LICENSE)** - MIT License with dependency information
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development guide and standards
+- **[CHANGELOG.md](CHANGELOG.md)** - Project evolution history  
 - **[Library Documentation](Library/ClaudeConsole/README.md)** - Complete API reference
-- **[Build Documentation](Bin/README.md)** - Binary and deployment guide
-- **[Tools Documentation](Tools/README.md)** - Demo and development tools
+- **[Build System](build.sh)** - Intelligent dependency management
 
-### 🔧 Component Documentation
+### 🔧 Development
 
-- **[Source Code](Source/README.md)** - Implementation architecture details
-- **[Headers](Include/README.md)** - Legacy API reference (use Library instead)
-- **[External Dependencies](External/README.md)** - Third-party library information
-- **[Test Suite](Tests/)** - Comprehensive testing framework
+```bash
+# Development workflow
+git clone <repository>
+cd CppV8ClaudeIntegration
+./build.sh deps          # Initialize dependencies  
+./build.sh debug         # Build with debug symbols
+./demo.sh --fast         # Quick feature demo
+./Tests/run_tests.sh     # Run test suite (if available)
+```
 
 ## Contributing
 
-We welcome contributions! Please see **[CONTRIBUTING.md](CONTRIBUTING.md)** for detailed guidelines.
+We welcome contributions! Key areas:
 
-**Quick Start:**
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Follow** [C++20 coding standards](CONTRIBUTING.md#coding-standards)
-4. **Test** thoroughly with `./test.sh`
-5. **Update** documentation for changes
-6. **Create** demos for new features
-7. **Submit** a Pull Request
+1. **V8 Integration**: Enhance JavaScript capabilities
+2. **Claude AI**: Improve AI integration and context handling
+3. **Shell Features**: Add more zsh-like functionality
+4. **Performance**: Optimize command execution
+5. **Testing**: Expand test coverage
+6. **Documentation**: Improve guides and examples
 
 **Development Setup:**
 ```bash
-git clone https://github.com/cschladetsch/CppV8ClaudeIntegration.git
+git clone https://github.com/user/CppV8ClaudeIntegration.git
 cd CppV8ClaudeIntegration
 ./build.sh deps  # Initialize dependencies
-./build.sh       # Build project
-./test.sh        # Run tests
+./build.sh debug # Build with debug info
+./demo.sh        # Test all features
 ```
 
 ## License
 
-This project is open source. See the LICENSE file for details.
+This project is open source under the MIT License. See LICENSE file for details.
 
 ## Related Projects
 
-- **PyClaudeCli**: Python CLI for Claude AI integration
-- **rang**: Header-only library for colored terminal output
-- **Boost**: Portable C++ libraries
+- **claude-cli**: Python CLI for Claude AI integration
+- **V8**: Google's high-performance JavaScript engine
+- **rang**: Header-only colored terminal output library
+- **nlohmann/json**: Modern C++ JSON library
 
 ---
 
-**CLL (Claude Command Line)** - Where AI meets the command line. 🚀
+**CLL (Claude Command Line)** - Where shell, JavaScript, and AI converge. 🚀

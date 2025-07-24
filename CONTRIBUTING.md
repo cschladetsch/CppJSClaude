@@ -1,22 +1,24 @@
 # Contributing to CLL (Claude Command Line)
 
-Thank you for your interest in contributing to CLL! This guide will help you get started with contributing to the project.
+Thank you for your interest in contributing to CLL! This comprehensive guide will help you contribute effectively to the project.
 
 ## 🚀 Quick Start
 
 1. **Fork the repository**
 2. **Clone your fork**: `git clone https://github.com/yourusername/CppV8ClaudeIntegration.git`
 3. **Build the project**: `./build.sh`
-4. **Run tests**: `./test.sh`
-5. **Make your changes**
-6. **Test thoroughly**
-7. **Submit a pull request**
+4. **Run comprehensive demo**: `./demo.sh`
+5. **Run tests**: `./build.sh test`
+6. **Make your changes**
+7. **Test thoroughly**
+8. **Submit a pull request**
 
 ## 📋 Table of Contents
 
 - [Development Environment](#development-environment)
-- [Project Structure](#project-structure)
+- [Project Architecture](#project-architecture)
 - [Coding Standards](#coding-standards)
+- [V8 JavaScript Integration](#v8-javascript-integration)
 - [Testing Requirements](#testing-requirements)
 - [Submitting Changes](#submitting-changes)
 - [Creating Demos](#creating-demos)
@@ -29,28 +31,42 @@ Thank you for your interest in contributing to CLL! This guide will help you get
 - **Operating System**: Linux, macOS, or Windows with WSL2
 - **Compiler**: GCC 10+ or Clang 10+ with C++20 support
 - **Build System**: CMake 3.15+
-- **Version Control**: Git
-- **Optional**: GNU Readline for enhanced terminal support
+- **Version Control**: Git (for submodule management)
+- **Python**: 3.x with claude-cli (for AI integration)
 
 ### Required Tools
 
 ```bash
 # Ubuntu/Debian
-sudo apt-get install build-essential cmake git libreadline-dev python3
+sudo apt-get install build-essential cmake git libreadline-dev python3 libv8-dev
 
 # macOS
-brew install cmake readline python3 git
+brew install cmake readline python3 git v8
 
-# Install development dependencies
+# Install Claude AI CLI
+pip install claude-cli
+claude auth
+
+# Initialize project dependencies
 ./build.sh deps
 ```
 
-### Recommended IDE Setup
+### Optional Dependencies
 
-- **VS Code** with C++ extensions
-- **CLion** with CMake support  
-- **Qt Creator** with CMake project support
-- **Vim/Neovim** with C++ language server
+CLL uses intelligent dependency management:
+
+```bash
+# V8 JavaScript Engine (optional but recommended)
+# System package (Ubuntu/Debian)
+sudo apt-get install libv8-dev
+
+# Or build from source (automatically managed)
+cmake .. -DBUILD_V8_FROM_SOURCE=ON
+
+# Auto-fetched lightweight dependencies
+# - rang (colored output)
+# - nlohmann/json (JSON configuration)
+```
 
 ### Environment Setup
 
@@ -65,41 +81,85 @@ cd CppV8ClaudeIntegration
 
 # Verify installation
 ./Bin/cll --help
-./test.sh
+./demo.sh --fast
 ```
 
-## 📁 Project Structure
+### IDE Recommendations
+
+- **VS Code** with C++ extensions and CMake tools
+- **CLion** with full CMake and Git integration  
+- **Qt Creator** with CMake project support
+- **Vim/Neovim** with LSP and C++ language server
+
+## 🏗️ Project Architecture
+
+### High-Level Structure
+
+```
+CLL Architecture:
+┌─────────────────────────────────────────────────────────────────┐
+│                        CLL Project                              │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
+│  │ Main App        │  │ ClaudeConsole   │  │ V8 JavaScript   │  │
+│  │ - CLI entry     │  │ Library         │  │ Integration     │  │
+│  │ - User I/O      │  │ - Core engine   │  │ - Real JS exec  │  │
+│  │ - Mode mgmt     │  │ - Command proc  │  │ - DLL loading   │  │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘  │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
+│  │ Configuration   │  │ Claude AI       │  │ Demo & Tools    │  │
+│  │ - ~/.config/    │  │ Integration     │  │ - demo.sh       │  │
+│  │ - Shared setup  │  │ - ? prefix      │  │ - build.sh      │  │
+│  │ - JSON/aliases  │  │ - Python CLI    │  │ - Testing       │  │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Directory Structure
 
 ```
 CppV8ClaudeIntegration/
-├── Bin/                    # Compiled binaries and executables
-├── Library/               # Core ClaudeConsole library
-│   └── ClaudeConsole/     # Main library implementation
-│       ├── Include/       # Public API headers
-│       ├── Source/        # Implementation files
-│       └── CMakeLists.txt # Library build configuration
-├── Source/                # Main application source (legacy)
-├── Include/               # Legacy headers (use Library/ instead)
-├── Tests/                 # Comprehensive test suite
-├── External/              # Git submodules (rang, boost)
-├── Resources/             # Images, demos, documentation assets
-├── Tools/                 # Development tools (excluded from repo)
-├── CMakeLists.txt         # Main build configuration
-├── build.sh              # Build script with colored output
-├── test.sh               # Comprehensive test runner
-└── demo.sh               # Feature demonstration script
+├── Bin/                        # Compiled binaries
+│   └── cll                    # Main CLL executable
+├── Source/                     # Main application source
+│   └── Main.cpp               # Application entry point
+├── Library/                    # Core library components
+│   └── ClaudeConsole/         # ClaudeConsole library
+│       ├── Include/           # Library headers
+│       │   ├── ClaudeConsole.h  # Main API
+│       │   ├── DllLoader.h      # DLL hot-loading
+│       │   └── V8Compat.h       # V8 compatibility
+│       ├── Source/            # Implementation
+│       │   ├── ClaudeConsole.cpp
+│       │   └── DllLoader.cpp
+│       └── CMakeLists.txt     # Library build config
+├── External/                   # Auto-managed dependencies
+│   ├── rang/                  # Colored output (auto-fetched)
+│   ├── json/                  # JSON library (auto-fetched)
+│   └── v8/                    # V8 engine (optional)
+├── Tests/                      # Comprehensive test suite
+├── Tools/                      # Development and demo tools
+├── Resources/                  # Documentation assets
+├── CMakeLists.txt             # Main build configuration
+├── build.sh                   # Intelligent build script
+├── demo.sh                    # Comprehensive demo
+└── README.md                  # Project documentation
 ```
 
 ## 📖 Coding Standards
 
 ### C++ Guidelines
 
-- **Standard**: C++20 minimum requirement
-- **Style**: Follow existing code style in the project
-- **Naming**: Use UpperCamelCase for files/classes, snake_case for variables
-- **Namespace**: All code must be in the `cll` namespace
-- **Headers**: Use `#pragma once` for header guards
-- **Includes**: Group system headers, then project headers
+- **Standard**: C++20 minimum requirement with full feature usage
+- **Style**: Follow existing project patterns and conventions
+- **Naming**: 
+  - Classes/Files: `UpperCamelCase` (`ClaudeConsole`, `DllLoader`)
+  - Methods: `UpperCamelCase` (`ExecuteCommand`, `LoadConfiguration`)
+  - Variables: `snake_case_` for members, `snake_case` for locals
+  - Constants: `UPPER_SNAKE_CASE`
+- **Namespace**: All code in the `cll` namespace
+- **Headers**: Use `#pragma once` exclusively
+- **Includes**: System headers first, then project headers
 
 ### Code Style Example
 
@@ -109,72 +169,225 @@ CppV8ClaudeIntegration/
 #include <string>
 #include <vector>
 #include <memory>
+#include <chrono>
 
 #include "ClaudeConsole.h"
 
 namespace cll {
 
+/**
+ * @brief Advanced command processor with V8 integration
+ * 
+ * This class handles command execution, mode switching, and
+ * integration with V8 JavaScript engine and Claude AI.
+ */
 class CommandProcessor {
 public:
     CommandProcessor();
-    ~CommandProcessor();
+    virtual ~CommandProcessor();
 
-    // Method names: UpperCamelCase
+    // Core command execution
     CommandResult ExecuteCommand(const std::string& command);
-    bool IsValidCommand(const std::string& command) const;
+    CommandResult ExecuteJavaScript(const std::string& code);
+    CommandResult ExecuteClaudeQuery(const std::string& question);
+
+    // Mode management
+    void SetMode(ConsoleMode mode);
+    ConsoleMode GetMode() const;
 
 private:
-    // Member variables: snake_case with trailing underscore
+    // Member variables with trailing underscore
     std::vector<std::string> command_history_;
     std::unique_ptr<ClaudeConsole> console_;
+    ConsoleMode current_mode_;
     
-    // Private methods: UpperCamelCase
+    // Private helper methods
+    bool ValidateCommand(const std::string& command) const;
     void ProcessBuiltinCommand(const std::string& command);
+    std::string FormatOutput(const CommandResult& result) const;
 };
 
 } // namespace cll
 ```
 
-### File Naming Conventions
+### V8 Integration Standards
 
-- **Source Files**: `ClaudeConsole.cpp`, `CommandProcessor.cpp`
-- **Header Files**: `ClaudeConsole.h`, `CommandProcessor.h`
-- **Test Files**: `TestClaudeConsole.cpp`, `TestCommandProcessor.cpp`
-- **Directories**: `UpperCamelCase` (Library, Source, Tests)
+When working with V8 integration:
+
+```cpp
+#ifdef HAS_V8
+    // V8-specific implementation
+    #include "V8Compat.h"
+    
+    bool InitializeV8Engine() {
+        platform_ = v8_compat::CreateDefaultPlatform();
+        v8::V8::InitializePlatform(platform_.get());
+        v8::V8::Initialize();
+        return true;
+    }
+#else
+    // Graceful fallback for systems without V8
+    bool InitializeV8Engine() {
+        // Simulation mode - all JavaScript is simulated
+        return true;
+    }
+#endif
+```
+
+### Configuration System Standards
+
+```cpp
+// Always use shared configuration paths
+std::string GetConfigPath() const {
+    return std::string(std::getenv("HOME")) + "/.config/cll/";
+}
+
+std::string GetSharedConfigPath() const {
+    return std::string(std::getenv("HOME")) + "/.config/shared/";
+}
+
+// Load configuration with error handling
+bool LoadConfiguration() {
+    CreateConfigDirectory();
+    LoadSharedConfiguration();
+    
+    try {
+        // Load JSON configuration
+        auto config_path = GetConfigPath() + "config.json";
+        if (std::filesystem::exists(config_path)) {
+            // Parse and apply configuration
+        }
+        return true;
+    } catch (const std::exception& e) {
+        Error("Failed to load configuration: " + std::string(e.what()));
+        return false;
+    }
+}
+```
 
 ### Documentation Standards
 
-- **All public APIs must be documented**
+- **All public APIs must be fully documented**
 - **Use Doxygen-style comments**
 - **Include usage examples for complex functions**
-- **Update README files for new features**
+- **Document thread safety and performance characteristics**
+- **Update README files for architectural changes**
 
 ```cpp
 /**
- * @brief Executes a command in the specified mode
+ * @brief Executes a command with full context and timing
+ * 
+ * This method handles command execution in the current mode,
+ * providing comprehensive timing information and error handling.
+ * Supports shell commands, JavaScript execution, and Claude AI queries.
+ * 
  * @param command The command string to execute
- * @param mode The execution mode (Shell or JavaScript)
- * @return CommandResult containing output, timing, and error information
+ * @return CommandResult with output, timing, and error information
+ * 
+ * @note This method is not thread-safe
+ * @warning JavaScript execution requires V8 engine availability
  * 
  * @example
- * CommandResult result = ExecuteCommand("ls -la", ConsoleMode::Shell);
+ * ```cpp
+ * auto result = console.ExecuteCommand("&Math.sqrt(64)");
  * if (result.success) {
- *     std::cout << result.output;
+ *     std::cout << "Result: " << result.output << std::endl;
+ *     std::cout << "Executed in: " << 
+ *         ClaudeConsole::FormatExecutionTime(result.executionTime) << std::endl;
  * }
+ * ```
  */
-CommandResult ExecuteCommand(const std::string& command, ConsoleMode mode);
+CommandResult ExecuteCommand(const std::string& command);
+```
+
+## ⚡ V8 JavaScript Integration
+
+### Conditional Compilation
+
+Always use conditional compilation for V8 features:
+
+```cpp
+class ClaudeConsole {
+private:
+#ifdef HAS_V8
+    // V8-specific members
+    std::unique_ptr<v8::Platform> platform_;
+    v8::Isolate* isolate_;
+    v8::Persistent<v8::Context> context_;
+    std::unique_ptr<DllLoader> dll_loader_;
+#endif
+
+public:
+    bool InitializeJavaScript() {
+#ifdef HAS_V8
+        return InitializeV8Engine();
+#else
+        // JavaScript execution will be simulated
+        return true;
+#endif
+    }
+};
+```
+
+### V8 Compatibility
+
+Use the V8Compat layer for version independence:
+
+```cpp
+#ifdef HAS_V8
+#include "V8Compat.h"
+
+bool ExecuteJavaScriptCode(const std::string& code) {
+    v8_compat::TryCatch try_catch(isolate_);
+    
+    auto context = context_.Get(isolate_);
+    auto result = v8_compat::CompileAndRun(isolate_, context, code, "<repl>");
+    
+    if (try_catch.HasCaught()) {
+        std::string error = try_catch.GetDetailedError(isolate_, context);
+        Error("JavaScript error: " + error);
+        return false;
+    }
+    
+    return true;
+}
+#endif
+```
+
+### DLL Loading Integration
+
+For DLL hot-loading features:
+
+```cpp
+#ifdef HAS_V8
+bool LoadDynamicLibrary(const std::string& path) {
+    if (!dll_loader_) {
+        dll_loader_ = std::make_unique<DllLoader>();
+    }
+    
+    if (dll_loader_->LoadDll(path)) {
+        Output("Library loaded: " + path);
+        return true;
+    } else {
+        Error("Failed to load library: " + path);
+        return false;
+    }
+}
+#endif
 ```
 
 ## 🧪 Testing Requirements
 
 ### Test Categories
 
-1. **Unit Tests**: Test individual functions and classes
-2. **Integration Tests**: Test component interactions
-3. **System Tests**: Test complete workflows
-4. **Performance Tests**: Verify timing and memory usage
+1. **Unit Tests**: Individual component testing
+2. **Integration Tests**: Component interaction testing
+3. **V8 Tests**: JavaScript engine functionality
+4. **Configuration Tests**: Settings and alias management
+5. **Performance Tests**: Timing and memory benchmarks
+6. **End-to-End Tests**: Complete workflow validation
 
-### Writing Tests
+### Test Framework Setup
 
 ```cpp
 #include <gtest/gtest.h>
@@ -185,29 +398,66 @@ using namespace cll;
 class ClaudeConsoleTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        console = std::make_unique<ClaudeConsole>();
-        ASSERT_TRUE(console->Initialize());
+        console_ = std::make_unique<ClaudeConsole>();
+        ASSERT_TRUE(console_->Initialize()) << "Failed to initialize console";
     }
     
     void TearDown() override {
-        console->Shutdown();
-        console.reset();
+        if (console_) {
+            console_->Shutdown();
+            console_.reset();
+        }
     }
     
-    std::unique_ptr<ClaudeConsole> console;
+    std::unique_ptr<ClaudeConsole> console_;
 };
 
-TEST_F(ClaudeConsoleTest, ExecuteSimpleCommand) {
-    auto result = console->ExecuteCommand("echo hello");
+// Test shell command execution
+TEST_F(ClaudeConsoleTest, ExecuteShellCommand) {
+    auto result = console_->ExecuteCommand("echo 'test'");
     EXPECT_TRUE(result.success);
-    EXPECT_NE(result.output.find("hello"), std::string::npos);
+    EXPECT_NE(result.output.find("test"), std::string::npos);
+    EXPECT_GT(result.executionTime.count(), 0);
 }
 
-TEST_F(ClaudeConsoleTest, JavaScriptMode) {
-    console->SetMode(ConsoleMode::JavaScript);
-    auto result = console->ExecuteCommand("Math.sqrt(64)");
+// Test JavaScript integration (conditional)
+TEST_F(ClaudeConsoleTest, JavaScriptExecution) {
+#ifdef HAS_V8
+    auto result = console_->ExecuteCommand("&Math.sqrt(64)");
     EXPECT_TRUE(result.success);
-    // Test JavaScript execution
+    EXPECT_NE(result.output.find("8"), std::string::npos);
+#else
+    auto result = console_->ExecuteCommand("&Math.sqrt(64)");
+    EXPECT_TRUE(result.success);
+    EXPECT_NE(result.output.find("simulated"), std::string::npos);
+#endif
+}
+
+// Test Claude AI integration
+TEST_F(ClaudeConsoleTest, ClaudeAIQuery) {
+    auto result = console_->ExecuteCommand("?What is 2+2?");
+    // Test should work regardless of claude-cli availability
+    EXPECT_TRUE(result.success || !result.error.empty());
+}
+```
+
+### Performance Testing
+
+```cpp
+TEST_F(ClaudeConsoleTest, PerformanceBenchmark) {
+    const int iterations = 1000;
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    for (int i = 0; i < iterations; ++i) {
+        auto result = console_->ExecuteCommand("echo test");
+        EXPECT_TRUE(result.success);
+    }
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    
+    // Average should be under 5ms per command
+    EXPECT_LT(duration.count() / iterations, 5000);
 }
 ```
 
@@ -215,68 +465,66 @@ TEST_F(ClaudeConsoleTest, JavaScriptMode) {
 
 ```bash
 # Run all tests
-./test.sh
+./build.sh test
 
-# Run specific test categories
-./test.sh --filter "*Console*"
-./test.sh --filter "*JavaScript*"
+# Run specific test patterns
+cd build
+ctest --test-dir . -R "Console"
+ctest --test-dir . -R "JavaScript"
+ctest --test-dir . -R "Performance"
 
 # Run with verbose output
-./test.sh --verbose
+ctest --test-dir . --verbose
 
-# Run performance tests
-./test.sh --performance
+# Run comprehensive demo
+./demo.sh --fast
 ```
-
-### Test Requirements for PRs
-
-- **All new features must have tests**
-- **Minimum 80% code coverage for new code**
-- **All existing tests must pass**
-- **Performance tests must not regress**
 
 ## 📤 Submitting Changes
 
-### Before Submitting
+### Pre-Submission Checklist
 
-1. **Run the full test suite**: `./test.sh`
-2. **Build in both debug and release**: `./build.sh debug && ./build.sh release`
-3. **Test on your target platform**
-4. **Update documentation for new features**
-5. **Create demo if adding user-facing features**
+1. **Build verification**: `./build.sh clean && ./build.sh release`
+2. **Test suite**: `./build.sh test`
+3. **Demo verification**: `./demo.sh`
+4. **V8 testing**: Test both with and without V8 integration
+5. **Documentation updates**: Update relevant README files
+6. **Performance check**: Ensure no significant regressions
 
 ### Pull Request Process
 
-1. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-2. **Make your changes** following coding standards
-3. **Add/update tests** for your changes
-4. **Update documentation** as needed
-5. **Create demos** for new features
-6. **Commit with descriptive messages**
-7. **Push to your fork**: `git push origin feature/amazing-feature`
-8. **Open a Pull Request** with detailed description
+1. **Create feature branch**: `git checkout -b feature/amazing-feature`
+2. **Implement changes** following coding standards
+3. **Add comprehensive tests** for new functionality
+4. **Update documentation** including README files
+5. **Test thoroughly** on target platforms
+6. **Create demo** for user-facing features
+7. **Commit with clear messages**
+8. **Push and create PR** with detailed description
 
-### Commit Message Format
+### Commit Message Standards
 
 ```
-feat: add multi-line JavaScript input support
+feat(v8): add hot-reloading for DLL libraries
 
-- Implement multi-line mode detection for & prefix
-- Add Ctrl-D termination for multi-line input
-- Update prompt display for multi-line mode
-- Add comprehensive tests for new functionality
+- Implement DLL loading/unloading in V8 context
+- Add reloadDll() JavaScript function
+- Create comprehensive error handling for library loading
+- Add performance benchmarks for DLL operations
+- Update demo to showcase hot-reloading workflow
 
-Closes #123
+Closes #145
 ```
 
 **Commit Types:**
 - `feat`: New features
-- `fix`: Bug fixes
+- `fix`: Bug fixes  
 - `docs`: Documentation updates
-- `test`: Test additions/modifications
+- `test`: Test improvements
 - `refactor`: Code refactoring
 - `perf`: Performance improvements
 - `build`: Build system changes
+- `chore`: Maintenance tasks
 
 ### Pull Request Template
 
@@ -285,174 +533,151 @@ Closes #123
 Brief description of changes and motivation.
 
 ## Type of Change
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that causes existing functionality to change)
+- [ ] Bug fix (non-breaking change fixing an issue)
+- [ ] New feature (non-breaking change adding functionality)
+- [ ] Breaking change (change affecting existing functionality)
+- [ ] Performance improvement
 - [ ] Documentation update
+
+## V8 Integration Impact
+- [ ] V8-related changes tested with engine available
+- [ ] V8-related changes tested with engine unavailable
+- [ ] No V8 integration impact
 
 ## Testing
 - [ ] Unit tests added/updated
 - [ ] Integration tests pass
-- [ ] Manual testing completed
-- [ ] Performance impact assessed
+- [ ] Performance tests pass
+- [ ] Demo updated (if applicable)
+- [ ] Manual testing completed on target platforms
+
+## Documentation
+- [ ] Code comments updated
+- [ ] README files updated
+- [ ] API documentation updated
+- [ ] Demo script updated
 
 ## Checklist
 - [ ] Code follows project style guidelines
 - [ ] Self-review completed
-- [ ] Documentation updated
-- [ ] Demo created (if applicable)
-- [ ] All tests pass
+- [ ] All tests pass locally
+- [ ] Build succeeds in both debug and release modes
+- [ ] Demo script runs successfully
 ```
 
 ## 🎬 Creating Demos
 
 ### When to Create Demos
 
-- **New user-facing features**
-- **Significant functionality changes**
-- **Complex workflows**
-- **Performance improvements**
+- **New user-facing features** requiring demonstration
+- **Complex workflows** that benefit from visual explanation
+- **Performance improvements** with measurable impact
+- **Integration features** showing component interaction
 
-### Demo Creation Process
+### Demo Creation
 
 ```bash
-# Create automated demo GIF
-./Tools/write-demo.sh
+# Run comprehensive demo
+./demo.sh
 
-# Create manual demo for screen recording
-./Tools/demo_screengif.sh
+# Create demo with different speeds
+./demo.sh --fast     # Quick demonstration
+./demo.sh --slow     # Detailed explanation
+./demo.sh --help     # See all options
 
-# Test demo quality
-# View generated ./Resources/Demo.gif
+# Test specific demo sections
+./demo.sh --interactive  # Step through manually
 ```
 
 ### Demo Guidelines
 
-- **Keep demos under 60 seconds**
-- **Show real-world usage scenarios**
-- **Include error handling examples**
-- **Demonstrate key features clearly**
-- **Use realistic data and commands**
+- **Keep demos focused** on specific functionality
+- **Show realistic usage** scenarios
+- **Include error handling** examples
+- **Demonstrate performance** characteristics
+- **Test on clean systems** to verify dependencies
 
 ## 🏗️ Architecture Guidelines
 
 ### Adding New Features
 
-1. **Library-First Design**: Add core functionality to `Library/ClaudeConsole/`
-2. **Public API**: Expose features through clean public interfaces
-3. **Testing**: Write tests before implementation (TDD)
-4. **Documentation**: Document APIs and update READMEs
-5. **Integration**: Update main application to use new features
+1. **Library-First Design**
+   - Implement core functionality in `Library/ClaudeConsole/`
+   - Expose clean, documented APIs
+   - Use conditional compilation for optional features
+
+2. **V8 Integration Considerations**
+   - Always provide fallback for systems without V8
+   - Use V8Compat layer for version independence
+   - Test both V8 and simulation modes
+
+3. **Configuration Management**
+   - Use shared configuration system
+   - Support both JSON and plain text formats
+   - Provide migration paths for configuration changes
+
+4. **Error Handling**
+   - Use return codes rather than exceptions
+   - Provide detailed error messages
+   - Implement graceful degradation
 
 ### Performance Considerations
 
-- **Memory Efficiency**: Use RAII and smart pointers
-- **Execution Speed**: Profile and optimize critical paths
-- **Startup Time**: Minimize initialization overhead
-- **Responsiveness**: Keep UI responsive during long operations
+- **Memory Efficiency**: Use RAII and smart pointers consistently
+- **Startup Performance**: Lazy-load optional components
+- **Command Execution**: Minimize overhead for shell commands
+- **V8 Performance**: Reuse contexts and optimize compilation
 
-### Error Handling
+## 🐛 Bug Reports & Feature Requests
 
-- **No Exceptions**: Use return codes and error messages
-- **Graceful Degradation**: Provide meaningful fallbacks
-- **User-Friendly Messages**: Clear, actionable error descriptions
-- **Logging**: Include debug information for troubleshooting
+### Bug Report Process
 
-## 🐛 Bug Reports
+1. **Search existing issues** for duplicates
+2. **Test with latest version** and clean configuration
+3. **Create minimal reproduction** case
+4. **Gather system information** and logs
+5. **Submit detailed bug report**
 
-### Before Reporting
+### Feature Request Guidelines
 
-1. **Update to latest version**
-2. **Check existing issues**
-3. **Test with minimal configuration**
-4. **Gather system information**
-
-### Bug Report Template
-
-```markdown
-**Bug Description**
-Clear description of the bug.
-
-**To Reproduce**
-1. Run command '...'
-2. Enter input '...'
-3. See error
-
-**Expected Behavior**
-What should have happened.
-
-**System Information**
-- OS: [e.g., Ubuntu 22.04]
-- Compiler: [e.g., GCC 11.2]
-- CLL Version: [e.g., v1.0.0]
-
-**Additional Context**
-Logs, screenshots, or other relevant information.
-```
-
-## 💡 Feature Requests
-
-### Feature Request Process
-
-1. **Check existing issues** for similar requests
-2. **Discuss in discussions** for community feedback
-3. **Create detailed feature request** with use cases
-4. **Consider implementation complexity**
+1. **Describe the problem** being solved
+2. **Propose specific solution** with usage examples
+3. **Consider implementation** complexity and impact
+4. **Discuss in community** for feedback
 5. **Volunteer to implement** if possible
-
-### Feature Request Template
-
-```markdown
-**Feature Description**
-Clear, concise description of the feature.
-
-**Use Case**
-Why is this feature needed? What problem does it solve?
-
-**Proposed Solution**
-How should this feature work?
-
-**Alternative Solutions**
-Other ways to solve the same problem.
-
-**Implementation Notes**
-Technical considerations or challenges.
-```
 
 ## 🤝 Getting Help
 
 ### Community Resources
 
-- **GitHub Discussions**: General questions and community support
+- **GitHub Discussions**: General questions and design discussions
 - **GitHub Issues**: Bug reports and feature requests
-- **README Files**: Comprehensive documentation
-- **Code Comments**: Implementation details and API docs
+- **README Documentation**: Comprehensive usage guides
+- **Code Comments**: Implementation details and examples
 
-### Development Help
+### Development Support
 
-- **Architecture Questions**: Review existing code patterns
-- **Testing Help**: Look at existing test files for examples
-- **Build Issues**: Check build logs and dependency requirements
-- **Demo Creation**: Use existing Tools/ scripts as templates
+- **Architecture Questions**: Review existing patterns in codebase
+- **V8 Integration**: Check V8Compat.h for version compatibility
+- **Testing**: Use existing test files as templates
+- **Build Issues**: Check CMakeLists.txt and build.sh
 
-### Contact
+### Contact Information
 
-- **Maintainer**: Check GitHub repository for current maintainers
-- **Contributors**: See CONTRIBUTORS.md for active contributors
+- **Maintainers**: Listed in CONTRIBUTORS.md
 - **Issues**: Create GitHub issue for specific problems
+- **Discussions**: Use GitHub Discussions for general questions
 
-## 📄 License
+## 📄 License & Recognition
 
-By contributing to CLL, you agree that your contributions will be licensed under the same license as the project (see LICENSE file).
+By contributing to CLL, you agree that your contributions will be licensed under the same license as the project.
 
-## 🎉 Recognition
-
-Contributors are recognized in:
-- **CONTRIBUTORS.md**: List of all contributors
-- **Release Notes**: Major contribution acknowledgments
-- **Code Comments**: Credit for significant implementations
-- **GitHub**: Automatic contribution tracking
+**Contributors are recognized in:**
+- CONTRIBUTORS.md with detailed contribution history
+- Release notes for significant contributions
+- Code comments for major implementations
+- GitHub's automatic contribution tracking
 
 ---
 
-Thank you for contributing to CLL! Your efforts help make this project better for everyone. 🚀
+**Thank you for contributing to CLL!** Your efforts help create a powerful, modern command-line tool that combines the best of shell, JavaScript, and AI capabilities. 🚀

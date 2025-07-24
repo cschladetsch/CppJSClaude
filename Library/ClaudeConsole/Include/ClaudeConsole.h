@@ -7,7 +7,17 @@
 #include <memory>
 #include <functional>
 
+// V8 integration (conditional)
+#ifdef HAS_V8
+#include <v8.h>
+#endif
+
 namespace cll {
+
+#ifdef HAS_V8
+// Forward declaration for DLL loader
+class DllLoader;
+#endif
 
 // Command result structure
 struct CommandResult {
@@ -46,6 +56,16 @@ public:
     CommandResult ExecuteJavaScript(const std::string& code);
     CommandResult ExecuteShellCommand(const std::string& command);
     CommandResult ExecuteClaudeQuery(const std::string& question);
+    
+    // V8 JavaScript execution
+    bool ExecuteFile(const std::string& path);
+    bool ExecuteString(const std::string& source, const std::string& name = "<eval>");
+    
+    // DLL loading
+    bool LoadDll(const std::string& path);
+    bool UnloadDll(const std::string& path);
+    bool ReloadDll(const std::string& path);
+    std::vector<std::string> GetLoadedDlls() const;
     
     // Mode management
     void SetMode(ConsoleMode mode) { mode_ = mode; }
@@ -93,6 +113,36 @@ private:
     OutputCallback outputCallback_;
     OutputCallback errorCallback_;
     
+#ifdef HAS_V8
+    // V8 JavaScript engine
+    std::unique_ptr<v8::Platform> platform_;
+    v8::Isolate* isolate_;
+    v8::Persistent<v8::Context> context_;
+    
+    // DLL loader for hot-loading native libraries
+    std::unique_ptr<DllLoader> dllLoader_;
+    
+    // V8 helper methods
+    bool CompileAndRun(const std::string& source, const std::string& name);
+    std::string ReadFile(const std::string& path);
+    void ReportException(v8::TryCatch* tryCatch);
+    void RegisterBuiltins(v8::Local<v8::Context> context);
+    void PrintResult(v8::Local<v8::Value> value);
+    
+    // V8 built-in functions
+    static void Print(const v8::FunctionCallbackInfo<v8::Value>& args);
+    static void Load(const v8::FunctionCallbackInfo<v8::Value>& args);
+    static void LoadDllFunc(const v8::FunctionCallbackInfo<v8::Value>& args);
+    static void UnloadDllFunc(const v8::FunctionCallbackInfo<v8::Value>& args);
+    static void ReloadDllFunc(const v8::FunctionCallbackInfo<v8::Value>& args);
+    static void ListDllsFunc(const v8::FunctionCallbackInfo<v8::Value>& args);
+    static void QuitFunc(const v8::FunctionCallbackInfo<v8::Value>& args);
+    static void HelpFunc(const v8::FunctionCallbackInfo<v8::Value>& args);
+    
+    // Static instance for V8 callbacks
+    static ClaudeConsole* instance_;
+#endif
+    
 public:
     // Claude integration helpers
     bool CheckClaudeAvailability();
@@ -102,8 +152,10 @@ public:
     // Configuration management
     void CreateConfigDirectory();
     void LoadConfiguration();
+    void LoadSharedConfiguration();
     void SaveConfiguration();
     std::string GetConfigPath() const;
+    std::string GetSharedConfigPath() const;
     
     // Alias management
     void SetAlias(const std::string& name, const std::string& value);

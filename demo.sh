@@ -58,8 +58,9 @@ send_command() {
 demo_config() {
     print_header "CONFIGURATION & ALIASES"
     
+    send_command "configure" "Run configuration wizard"
     send_command "config" "Show configuration directory"
-    send_command 'config alias ll="ls -la"' "Set alias 'll' for long listing"
+    send_command 'alias ll="ls -la"' "Set alias 'll' for long listing"
 }
 
 # Function to demonstrate JavaScript functionality
@@ -74,51 +75,88 @@ demo_javascript() {
 
 # Function to demonstrate shell functionality
 demo_shell() {
-    print_header "SHELL INTEGRATION DEMO"
+    print_header "ZSH-LIKE SHELL INTEGRATION DEMO"
     
-    print_step "Basic shell commands"
+    print_step "Navigation and directory operations"
     send_command "pwd" "Show current working directory"
-    
-    print_step "File system operations"
+    send_command "ls" "List files in current directory"
     send_command "ls -la" "List files with detailed information"
+    send_command "ls -lh" "List files with human-readable sizes"
     
-    print_step "System information"
+    print_step "File operations"
+    send_command "touch /tmp/cll_test.txt" "Create a test file"
+    send_command "echo 'Hello CLL' > /tmp/cll_test.txt" "Write content to file"
+    send_command "cat /tmp/cll_test.txt" "Display file contents"
+    send_command "wc -l /tmp/cll_test.txt" "Count lines in file"
+    send_command "rm /tmp/cll_test.txt" "Remove test file"
+    
+    print_step "Process and system information"
     send_command "whoami" "Show current user"
+    send_command "date" "Show current date and time"
+    send_command "uptime" "Show system uptime"
+    send_command "ps aux | head -5" "Show running processes (top 5)"
+    
+    print_step "Directory listing and navigation"
+    send_command "find . -name '*.cpp' -type f | head -3" "Find C++ source files"
+    send_command "du -sh ." "Show directory size"
+    send_command "df -h ." "Show disk usage"
+    
+    print_step "Text processing and pipes"
+    send_command "echo 'one\ntwo\nthree' | grep 'two'" "Text filtering with grep"
+    send_command "echo 'hello world' | tr '[:lower:]' '[:upper:]'" "Text transformation"
+    send_command "ls | wc -l" "Count files in directory"
+    
+    print_step "Environment and variables"
+    send_command "env | grep HOME" "Show HOME environment variable"
+    send_command "echo \$PATH | tr ':' '\n' | head -3" "Show PATH components"
+    send_command "which gcc" "Find executable location"
+    
+    print_step "Common zsh/bash utilities"
+    send_command "history | tail -3" "Show command history"
+    send_command "alias" "Show current aliases"
+    send_command "type ls" "Show command type"
+    
+    print_step "Advanced file operations"
+    send_command "ls -la | grep -E '^\\.'" "Show hidden files only"
+    send_command "ls -la | awk '{print \$9, \$5}'" "Show filenames and sizes"
+    send_command "ls -1 | sort -r | head -3" "Reverse sorted file list"
+    
+    print_step "Network and system"
+    send_command "hostname" "Show system hostname"
+    send_command "uname -a" "Show system information"
+    send_command "id" "Show user and group IDs"
+    
+    print_step "Zsh-style globbing and patterns"
+    send_command "ls -la *.*" "Show files with extensions"
+    send_command "ls -la *.{cpp,h}" "Show C++ source and header files"
+    send_command "echo **/*.cpp | head -c 50" "Recursive glob pattern (truncated)"
+    
+    print_step "Command substitution and expansion"
+    send_command "echo \"Today is \$(date +%A)\"" "Command substitution"
+    send_command "echo {1..5}" "Brace expansion"
+    send_command "echo ~/.*rc" "Home directory expansion"
     
     print_step "Mixed shell and JavaScript workflow"
     send_command "echo 'Current directory:'" "Display message using shell echo"
     send_command "&new Date().getHours()" "Get current hour using JavaScript"
-    send_command "date" "Show full date using shell date command"
+    send_command "date '+%H'" "Show current hour using shell date"
 }
 
 # Function to demonstrate Claude AI integration
 demo_claude() {
     print_header "CLAUDE AI INTEGRATION DEMO"
     
-    print_step "Testing Claude AI availability"
-    echo -e "${BLUE}[INFO]${NC} Checking if Claude AI (PyClaudeCli) is available..."
+    print_step "Testing Claude AI integration with ? prefix"
+    echo -e "${BLUE}[INFO]${NC} Claude AI integration uses ? prefix for queries"
     
-    if command -v ask &> /dev/null; then
-        echo -e "${GREEN}[SUCCESS]${NC} Claude AI is available via 'ask' command"
-        
-        print_step "Basic question to Claude"
-        send_command "ask What is 7 factorial?" "Ask Claude to calculate 7! (7 factorial)"
-        
-        print_step "Programming question"
-        send_command "ask Explain the difference between let and const in JavaScript in one sentence" "Ask Claude about JavaScript concepts"
-        
-        print_step "Mathematical computation"
-        send_command "ask What is the square root of 144?" "Ask Claude for mathematical calculation"
-        
-    else
-        echo -e "${YELLOW}[WARNING]${NC} Claude AI not available. Install PyClaudeCli or add 'ask' to PATH"
-        echo -e "${BLUE}[INFO]${NC} Demonstrating how the command would work:"
-        
-        print_step "Simulated Claude AI interaction"
-        echo -e "${GREEN}$ ask What is 2+2?${NC}"
-        echo "Claude response: 2 + 2 = 4"
-        sleep $DEMO_DELAY
-    fi
+    print_step "Basic question to Claude using ? prefix"
+    send_command "?What is 7 factorial?" "Ask Claude to calculate 7! (7 factorial)"
+    
+    print_step "Programming question using ? prefix"
+    send_command "?Explain the difference between let and const in JavaScript in one sentence" "Ask Claude about JavaScript concepts"
+    
+    print_step "Mathematical computation using ? prefix"
+    send_command "?What is the square root of 144?" "Ask Claude for mathematical calculation"
 }
 
 # Function to demonstrate built-in commands
@@ -126,6 +164,7 @@ demo_builtins() {
     print_header "BUILT-IN COMMANDS"
     
     send_command "help" "Show all available commands"
+    send_command "version" "Show CLL version information"
 }
 
 # Function to demonstrate advanced features
@@ -170,7 +209,7 @@ show_system_info() {
         echo -e "${BLUE}Git Branch:${NC} $branch"
     fi
     
-    echo -e "${BLUE}Configuration:${NC} ~/.config/claude-console/"
+    echo -e "${BLUE}Configuration:${NC} ~/.config/cll/ and ~/.config/shared/"
     
     sleep 3
 }
@@ -285,12 +324,13 @@ main_demo() {
     echo -e "${BLUE}Project:${NC} CLL (Claude Command Line) | ${BLUE}Language:${NC} C++20 | ${BLUE}Architecture:${NC} Library-based"
     if [ -f "$CLL_BINARY" ]; then
         local size=$(ls -lh "$CLL_BINARY" | awk '{print $5}')
-        echo -e "${BLUE}Binary:${NC} $size | ${BLUE}Config:${NC} ~/.config/claude-console/"
+        echo -e "${BLUE}Binary:${NC} $size | ${BLUE}Config:${NC} ~/.config/cll/ and ~/.config/shared/"
     fi
     sleep 1
     
-    # Run streamlined demos (optimized for 1 minute)
+    # Run streamlined demos
     demo_builtins
+    demo_shell
     demo_javascript  
     demo_config
     demo_claude
@@ -298,12 +338,12 @@ main_demo() {
     # Conclusion
     print_header "DEMO COMPLETE"
     
-    echo -e "${GREEN}✓ Built-in Commands${NC} - help, config, reload, clear, quit/exit"
-    echo -e "${GREEN}✓ Shell Integration${NC} - Execute any shell command with timing"
-    echo -e "${GREEN}✓ JavaScript Mode${NC} - Full JavaScript execution environment"  
-    echo -e "${GREEN}✓ & Prefix Feature${NC} - JavaScript from shell mode"
-    echo -e "${GREEN}✓ Configuration${NC} - ~/.config/claude-console/ with JSON and aliases"
-    echo -e "${GREEN}✓ Claude AI Integration${NC} - 'ask' command for AI queries"
+    echo -e "${GREEN}✓ Built-in Commands${NC} - help, version, configure, config, clear, quit/exit"
+    echo -e "${GREEN}✓ Shell Integration${NC} - Execute any shell command with timing (zsh-like interface)"
+    echo -e "${GREEN}✓ JavaScript Integration${NC} - & prefix for JavaScript injection"  
+    echo -e "${GREEN}✓ Claude AI Integration${NC} - ? prefix for Claude queries"
+    echo -e "${GREEN}✓ Configuration${NC} - ~/.config/cll/ and ~/.config/shared/ management"
+    echo -e "${GREEN}✓ V8 JavaScript Engine${NC} - Real JavaScript execution with V8"
     echo -e "${GREEN}✓ Error Handling${NC} - Graceful error messages and recovery"
     echo -e "${GREEN}✓ Performance Monitoring${NC} - Execution timing for all commands"
     echo ""
@@ -315,8 +355,9 @@ main_demo() {
     echo -e "${YELLOW}  cat Library/ClaudeConsole/README.md${NC}  # Library documentation"
     echo ""
     echo -e "${BLUE}Configuration files:${NC}"
-    echo -e "${YELLOW}  ~/.config/claude-console/config.json${NC}   # Main configuration"
-    echo -e "${YELLOW}  ~/.config/claude-console/aliases${NC}       # Command aliases"
+    echo -e "${YELLOW}  ~/.config/cll/config.json${NC}              # CLL-specific configuration"
+    echo -e "${YELLOW}  ~/.config/shared/prompts.json${NC}          # Shared prompt configuration"
+    echo -e "${YELLOW}  ~/.config/shared/aliases${NC}               # Shared command aliases"
     echo ""
 }
 
@@ -332,13 +373,15 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "  --slow         Run demo with longer delays (3s instead of 2s)"
     echo ""
     echo "This script demonstrates all features of CLL including:"
-    echo "  • Built-in command system"
-    echo "  • Shell command execution"
-    echo "  • JavaScript integration"
-    echo "  • Configuration management"
-    echo "  • Claude AI integration"
-    echo "  • Error handling"
-    echo "  • Performance monitoring"
+    echo "  • Built-in command system (help, version, configure, config)"
+    echo "  • Comprehensive zsh-like shell integration"
+    echo "  • JavaScript integration with & prefix"
+    echo "  • Claude AI integration with ? prefix"
+    echo "  • Configuration management (configure command)"
+    echo "  • File operations, pipes, and text processing"
+    echo "  • Environment variables and command substitution"
+    echo "  • Globbing patterns and brace expansion"
+    echo "  • Error handling and performance monitoring"
     echo ""
     echo "The demo runs in human-readable time with explanations between each step."
     exit 0
