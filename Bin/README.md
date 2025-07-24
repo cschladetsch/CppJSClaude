@@ -249,6 +249,35 @@ Category=Development
 EOF
 ```
 
+## Demo and Recording
+
+### Creating Demo GIFs
+
+Generate animated demonstrations of CLL:
+
+```bash
+# Automated GIF generation
+../Tools/write-demo.sh
+
+# Manual recording-optimized demo
+../Tools/demo_screengif.sh
+
+# Show all options
+../Tools/write-demo.sh --help
+```
+
+**Demo Features:**
+- **Automated Recording**: Uses asciinema + agg for high-quality GIFs
+- **Perfect Timing**: Optimized delays for screen recording
+- **Comprehensive Coverage**: All CLL features demonstrated
+- **GitHub Ready**: Output saved to `../Resources/Demo.gif`
+
+**Manual Recording:**
+1. Download **ScreenToGif** from https://www.screentogif.com/
+2. Run `../Tools/demo_screengif.sh`
+3. Record while demo plays
+4. Save as `../Resources/Demo.gif`
+
 ## Security Considerations
 
 - **Subprocess Execution**: Commands are executed with current user privileges

@@ -136,6 +136,46 @@ For detailed API documentation, usage examples, and advanced features, see:
 - [ClaudeConsole/README.md](ClaudeConsole/README.md) - Complete library documentation
 - [ClaudeConsole/Include/ClaudeConsole.h](ClaudeConsole/Include/ClaudeConsole.h) - API reference
 
+## Demo and Testing
+
+### Creating Demo GIFs
+
+Generate animated demonstrations showcasing the library in action:
+
+```bash
+# From project root - automated GIF generation
+./Tools/write-demo.sh
+
+# Manual recording with optimal timing
+./Tools/demo_screengif.sh
+
+# Show all demo options
+./Tools/write-demo.sh --help
+```
+
+**Library Features Demonstrated:**
+- **Console Initialization**: Library setup and configuration
+- **Command Processing**: Built-in command system
+- **Mode Switching**: JavaScript/Shell mode transitions
+- **Claude Integration**: AI query processing
+- **Performance Monitoring**: Execution timing display
+- **Error Handling**: Graceful error recovery
+
+**Output**: `../Resources/Demo.gif` - Professional quality for documentation
+
+### Testing the Library
+
+```bash
+# Run comprehensive test suite
+../test.sh
+
+# Build and test
+../build.sh test
+
+# Performance testing
+../test.sh --verbose
+```
+
 ## Contributing
 
 When contributing to the library:
@@ -145,6 +185,7 @@ When contributing to the library:
 3. **Update documentation for API changes**
 4. **Test with both shell and JavaScript modes**
 5. **Ensure proper error handling**
+6. **Create demos for new features**
 
 ## Performance Characteristics
 

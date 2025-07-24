@@ -228,6 +228,45 @@ target_link_libraries(your_target ClaudeConsole)
 
 All methods use return codes and error messages rather than exceptions. Check `CommandResult.success` and `CommandResult.error` for error information.
 
+## Demo and Testing
+
+### Creating Library Demos
+
+Generate animated demonstrations of the ClaudeConsole library:
+
+```bash
+# From project root - automated demo GIF
+../../Tools/write-demo.sh
+
+# Manual recording with perfect timing
+../../Tools/demo_screengif.sh
+
+# Show demo options
+../../Tools/write-demo.sh --help
+```
+
+**Library Demo Features:**
+- **API Usage Examples**: Real-world library integration
+- **Command Processing**: Built-in command system
+- **Configuration Management**: JSON config and aliases
+- **Performance Metrics**: Execution timing display
+- **Error Scenarios**: Graceful error handling
+
+**Output**: `../../Resources/Demo.gif` - Ready for library documentation
+
+### Testing the Library
+
+```bash
+# Comprehensive test suite
+../../test.sh
+
+# Library-specific tests
+ctest --test-dir ../../build
+
+# Performance benchmarks
+../../test.sh --verbose
+```
+
 ## Contributing
 
 When contributing to the library:
@@ -236,3 +275,4 @@ When contributing to the library:
 3. Update this README for API changes
 4. Add appropriate error handling
 5. Test with both shell and JavaScript modes
+6. Create demos for new features

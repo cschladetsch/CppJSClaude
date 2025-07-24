@@ -133,3 +133,11 @@ __pycache__/
 config.h
 build_config.h
 version.h
+
+# Tools directory (development scripts not for repo)
+Tools/
+
+# Recording/demo artifacts
+*.cast
+*.gif
+temp_demo.*

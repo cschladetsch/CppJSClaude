@@ -204,6 +204,28 @@ drwxr-xr-x  8 user user  256 Oct 24 10:30 .
 ./demo.sh
 ```
 
+### Creating Demo GIFs
+
+Generate animated GIFs to showcase CLL features:
+
+```bash
+# Automated GIF generation (recommended)
+./Tools/write-demo.sh
+
+# Manual recording with ScreenToGif
+./Tools/demo_screengif.sh
+
+# Show GIF generation options
+./Tools/write-demo.sh --help
+```
+
+**Output**: `./Resources/Demo.gif` - Ready for GitHub README display
+
+**Alternative Tools:**
+- **ScreenToGif**: Download from https://www.screentogif.com/
+- **OBS Studio**: For high-quality screen recording
+- **Terminalizer**: `npm install -g terminalizer`
+
 ### Manual Build
 ```bash
 # Initialize submodules
