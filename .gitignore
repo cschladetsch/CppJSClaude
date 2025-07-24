@@ -89,6 +89,7 @@ Doxyfile.bak
 
 # Test results
 test_results/
+test_results.xml
 *.xml
 
 # Logs and traces
