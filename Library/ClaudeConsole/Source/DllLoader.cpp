@@ -1,7 +1,11 @@
+#ifdef HAS_V8
+
 #include "DllLoader.h"
 #include <iostream>
 #include <algorithm>
+#ifdef HAS_RANG
 #include <rang/rang.hpp>
+#endif
 
 #ifdef _WIN32
     #include <windows.h>
@@ -127,3 +131,5 @@ bool DllLoader::RegisterDllFunctions(void* handle, const std::string& dllName,
         return false;
     }
 }
+
+#endif // HAS_V8

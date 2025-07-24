@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef HAS_V8
+
 #include <string>
 #include <memory>
 #include <unordered_map>
@@ -43,3 +45,5 @@ private:
     bool RegisterDllFunctions(void* handle, const std::string& dllName, 
                             v8::Isolate* isolate, v8::Local<v8::Context> context);
 };
+
+#endif // HAS_V8

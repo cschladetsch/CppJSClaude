@@ -18,8 +18,10 @@ namespace fs = std::filesystem;
 
 namespace cll {
 
+#ifdef HAS_V8
 // Static instance for V8 callbacks
 ClaudeConsole* ClaudeConsole::instance_ = nullptr;
+#endif
 
 ClaudeConsole::ClaudeConsole()
     : mode_(ConsoleMode::Shell), multiLineMode_(MultiLineMode::None),
@@ -995,7 +997,7 @@ bool ClaudeConsole::ExecuteFile(const std::string& path) {
     return false;
 }
 
-bool ClaudeConsole::ExecuteString(const std::string& source, const std::string& name) {
+bool ClaudeConsole::ExecuteString([[maybe_unused]] const std::string& source, [[maybe_unused]] const std::string& name) {
     Output(std::format("JavaScript execution not available (V8 not built)\n"));
     return false;
 }
