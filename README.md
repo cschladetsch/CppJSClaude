@@ -4,7 +4,7 @@
 
 ## Demo
 
-![Demo](Resources/Demo1.gif]
+![Demo](Resources/Demo1.gif)
 
 ## Description
 
