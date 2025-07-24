@@ -29,7 +29,7 @@ endif()
 add_subdirectory(Library/ClaudeConsole)
 
 # Include directories for main application
-include_directories(${CMAKE_SOURCE_DIR}/Include)
+include_directories(${CMAKE_SOURCE_DIR}/Library/ClaudeConsole/Include)
 
 # Source files for main executable
 set(SOURCES

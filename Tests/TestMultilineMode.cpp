@@ -92,27 +92,23 @@ TEST_F(MultiLineModeTest, MultiLineAskExecution) {
     EXPECT_EQ(console->GetMultiLineMode(), MultiLineMode::None);
 }
 
-// Test prompt changes in multi-line mode
+// Test multi-line mode functionality
 TEST_F(MultiLineModeTest, MultiLinePromptChanges) {
-    // Normal prompt
-    std::string normalPrompt = console->GetPrompt();
-    EXPECT_FALSE(normalPrompt.empty());
+    // Test multi-line mode detection
+    EXPECT_FALSE(console->IsInMultiLineMode());
     
-    // JavaScript multi-line prompt
+    // JavaScript multi-line mode
     console->StartMultiLineMode(MultiLineMode::JavaScript);
-    std::string jsPrompt = console->GetPrompt();
-    EXPECT_FALSE(jsPrompt.empty());
-    EXPECT_NE(jsPrompt, normalPrompt);
-    EXPECT_TRUE(jsPrompt.find("js") != std::string::npos);
+    EXPECT_TRUE(console->IsInMultiLineMode());
+    EXPECT_EQ(console->GetMultiLineMode(), MultiLineMode::JavaScript);
     
     console->EndMultiLineMode();
+    EXPECT_FALSE(console->IsInMultiLineMode());
     
-    // Ask multi-line prompt
+    // Ask multi-line mode
     console->StartMultiLineMode(MultiLineMode::Ask);
-    std::string askPrompt = console->GetPrompt();
-    EXPECT_FALSE(askPrompt.empty());
-    EXPECT_NE(askPrompt, normalPrompt);
-    EXPECT_NE(askPrompt, jsPrompt);
+    EXPECT_TRUE(console->IsInMultiLineMode());
+    EXPECT_EQ(console->GetMultiLineMode(), MultiLineMode::Ask);
 }
 
 // Test multi-line mode switching

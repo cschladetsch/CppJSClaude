@@ -113,7 +113,16 @@ private:
     }
     
     std::string GetPrompt() {
-        return console_->GetPrompt();
+        // Create prompt based on console mode
+        if (console_->IsInMultiLineMode()) {
+            return "... ";
+        }
+        
+        if (console_->IsJavaScriptMode()) {
+            return "\033[33mjs>\033[0m ";  // Yellow for JavaScript
+        } else {
+            return "\033[32mcll>\033[0m ";  // Green for shell
+        }
     }
     
     void ProcessCommand(const std::string& input) {

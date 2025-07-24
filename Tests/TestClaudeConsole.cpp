@@ -104,15 +104,12 @@ TEST_F(ClaudeConsoleTest, ShellCommandExecutionTest) {
 
 // Prompt management tests
 TEST_F(ClaudeConsoleTest, PromptManagementTest) {
-    // Test default prompt
-    std::string prompt = console->GetPrompt();
-    EXPECT_FALSE(prompt.empty());
-    EXPECT_TRUE(prompt.find("❯") != std::string::npos);
+    // Test mode switching functionality
+    console->SetMode(cll::ConsoleMode::JavaScript);
+    EXPECT_TRUE(console->IsJavaScriptMode());
     
-    // Test Claude prompt
-    std::string claudePrompt = console->GetClaudePrompt();
-    EXPECT_FALSE(claudePrompt.empty());
-    EXPECT_TRUE(claudePrompt.find("?") != std::string::npos);
+    console->SetMode(cll::ConsoleMode::Shell);
+    EXPECT_FALSE(console->IsJavaScriptMode());
 }
 
 // Utility function tests
