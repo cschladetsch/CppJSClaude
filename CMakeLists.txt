@@ -59,13 +59,20 @@ git_submodule_update()
 option(BUILD_V8_FROM_SOURCE "Build V8 from source instead of using system package" ON)
 option(FORCE_V8_BUILD "Force V8 build even if system package exists" OFF)
 option(FETCH_ONLY_ESSENTIAL "Only auto-fetch essential lightweight dependencies" ON)
+option(AUTO_FETCH_V8 "Automatically fetch and build V8 from source" OFF)
 
 # Find V8 dependencies
 find_package(PkgConfig REQUIRED)
 set(HAS_V8 FALSE)
 
+# Default to building V8 from source if AUTO_FETCH_V8 is enabled
+if(AUTO_FETCH_V8 AND BUILD_V8_FROM_SOURCE)
+    message(STATUS "Auto-fetching and building V8 from source (default behavior)")
+    set(FORCE_V8_BUILD ON)
+endif()
+
 # Try system V8 first (unless forced to build from source)
-if(NOT FORCE_V8_BUILD)
+if(NOT FORCE_V8_BUILD AND NOT AUTO_FETCH_V8)
     pkg_check_modules(V8 v8)
     
     if(V8_FOUND)
@@ -83,16 +90,81 @@ if(NOT FORCE_V8_BUILD)
 endif()
 
 # If system V8 not found or build from source requested, try to build from source
-if(NOT HAS_V8 AND (BUILD_V8_FROM_SOURCE OR FORCE_V8_BUILD))
+if(NOT HAS_V8 AND (BUILD_V8_FROM_SOURCE OR FORCE_V8_BUILD OR AUTO_FETCH_V8))
     message(STATUS "Attempting to build V8 from source...")
     
-    # Auto-fetch V8 submodule if enabled
-    if(AUTO_FETCH_DEPENDENCIES AND NOT EXISTS "${CMAKE_SOURCE_DIR}/External/v8")
-        message(STATUS "V8 not found, attempting to add as submodule...")
-        # Note: V8 is complex to clone, this is just a placeholder
-        # In practice, V8 requires depot_tools and gclient
-        message(STATUS "V8 requires special setup with depot_tools")
-        message(STATUS "Please manually set up V8 in External/v8 or install system package")
+    # Auto-fetch and setup V8 if enabled
+    if(AUTO_FETCH_V8 AND NOT EXISTS "${CMAKE_SOURCE_DIR}/External/v8")
+        message(STATUS "Auto-fetching V8 from source...")
+        
+        # Create External directory if it doesn't exist
+        file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/External")
+        
+        # Download depot_tools if not available
+        find_program(GCLIENT_EXECUTABLE gclient)
+        if(NOT GCLIENT_EXECUTABLE)
+            message(STATUS "Setting up depot_tools for V8 build...")
+            execute_process(
+                COMMAND git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+                WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/External"
+                RESULT_VARIABLE DEPOT_TOOLS_RESULT
+                OUTPUT_QUIET
+            )
+            
+            if(DEPOT_TOOLS_RESULT EQUAL 0)
+                set(ENV{PATH} "${CMAKE_SOURCE_DIR}/External/depot_tools:$ENV{PATH}")
+                message(STATUS "depot_tools downloaded successfully")
+            else()
+                message(WARNING "Failed to download depot_tools")
+            endif()
+        endif()
+        
+        # Fetch V8 using gclient
+        if(EXISTS "${CMAKE_SOURCE_DIR}/External/depot_tools" OR GCLIENT_EXECUTABLE)
+            message(STATUS "Fetching V8 source code...")
+            execute_process(
+                COMMAND ${CMAKE_SOURCE_DIR}/External/depot_tools/fetch v8
+                WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/External"
+                RESULT_VARIABLE V8_FETCH_RESULT
+                OUTPUT_QUIET
+            )
+            
+            if(V8_FETCH_RESULT EQUAL 0)
+                message(STATUS "V8 source fetched successfully")
+                
+                # Configure V8 build
+                message(STATUS "Configuring V8 build...")
+                execute_process(
+                    COMMAND ${CMAKE_SOURCE_DIR}/External/depot_tools/gn gen out.gn/x64.release --args="is_debug=false target_cpu=\"x64\" v8_target_cpu=\"x64\" use_custom_libcxx=false"
+                    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/External/v8"
+                    RESULT_VARIABLE V8_CONFIG_RESULT
+                    OUTPUT_QUIET
+                )
+                
+                if(V8_CONFIG_RESULT EQUAL 0)
+                    message(STATUS "V8 build configured")
+                    
+                    # Build V8 (run in background to avoid blocking CMake)
+                    message(STATUS "V8 source configured. Building V8 in background...")
+                    message(STATUS "This will take 30-60 minutes. Monitor with: tail -f ${CMAKE_SOURCE_DIR}/External/v8_build.log")
+                    execute_process(
+                        COMMAND bash -c "${CMAKE_SOURCE_DIR}/External/depot_tools/ninja -C out.gn/x64.release v8_monolith > ${CMAKE_SOURCE_DIR}/External/v8_build.log 2>&1 &"
+                        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/External/v8"
+                        RESULT_VARIABLE V8_BUILD_RESULT
+                    )
+                    
+                    if(V8_BUILD_RESULT EQUAL 0)
+                        message(STATUS "V8 built successfully")
+                    else()
+                        message(WARNING "V8 build failed or timed out")
+                    endif()
+                else()
+                    message(WARNING "V8 build configuration failed")
+                endif()
+            else()
+                message(WARNING "Failed to fetch V8 source")
+            endif()
+        endif()
     endif()
     
     # Check if External/v8 directory exists
@@ -117,21 +189,31 @@ if(NOT HAS_V8 AND (BUILD_V8_FROM_SOURCE OR FORCE_V8_BUILD))
             message(STATUS "  ./build.sh")
         endif()
     else()
-        message(STATUS "V8 source not found in External/v8")
-        message(STATUS "To build V8 from source:")
-        message(STATUS "  1. Set up depot_tools and gclient")
-        message(STATUS "  2. Clone V8 into External/v8 using gclient")
-        message(STATUS "  3. Run the V8 build script")
-        message(STATUS "  4. Re-run cmake")
+        if(AUTO_FETCH_V8)
+            message(STATUS "V8 auto-fetch was attempted but may have failed")
+            message(STATUS "Check above messages for any download or build errors")
+        else()
+            message(STATUS "V8 source not found in External/v8")
+            message(STATUS "To build V8 from source:")
+            message(STATUS "  - Enable auto-fetch: cmake -DAUTO_FETCH_V8=ON (default)")
+            message(STATUS "  - Or manually: fetch V8 using depot_tools into External/v8")
+        endif()
     endif()
 endif()
 
 # Final V8 status
 if(NOT HAS_V8)
-    message(WARNING "V8 not available - JavaScript execution will be simulated")
-    message(STATUS "To enable real V8:")
-    message(STATUS "  - Install system V8: sudo apt-get install libv8-dev")
-    message(STATUS "  - Or build from source: cmake -DBUILD_V8_FROM_SOURCE=ON")
+    if(AUTO_FETCH_V8)
+        message(WARNING "V8 auto-build in progress or failed - JavaScript execution will be simulated")
+        message(STATUS "V8 will be available after successful build completion")
+        message(STATUS "Monitor build progress above, then re-run cmake")
+    else()
+        message(WARNING "V8 not available - JavaScript execution will be simulated")
+        message(STATUS "To enable real V8:")
+        message(STATUS "  - Auto-build from source: cmake -DAUTO_FETCH_V8=ON (default)")
+        message(STATUS "  - Install system V8: sudo apt-get install libv8-dev")
+        message(STATUS "  - Disable auto-fetch: cmake -DAUTO_FETCH_V8=OFF")
+    endif()
 endif()
 
 # Ensure required submodules are available
@@ -320,6 +402,8 @@ else()
     message(STATUS "  JSON support: NO")
 endif()
 message(STATUS "  Auto-fetch deps: ${AUTO_FETCH_DEPENDENCIES}")
+message(STATUS "  Auto-fetch V8: ${AUTO_FETCH_V8}")
+message(STATUS "  Build V8 from source: ${BUILD_V8_FROM_SOURCE}")
 message(STATUS "  Tests enabled: ${BUILD_TESTS}")
 message(STATUS "")
 message(STATUS "Build with: cmake --build .")

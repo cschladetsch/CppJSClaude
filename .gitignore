@@ -82,6 +82,10 @@ conan/
 vcpkg/
 node_modules/
 
+# gclient files and folders
+*_gclient*
+.gclient*
+
 # Documentation generated
 docs/html/
 docs/latex/
