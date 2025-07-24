@@ -1,0 +1,6 @@
+[submodule "external/rang"]
+	path = external/rang
+	url = https://github.com/agauniyal/rang.git
+[submodule "external/boost"]
+	path = external/boost
+	url = https://github.com/boostorg/boost.git

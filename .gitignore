@@ -1,14 +1,14 @@
 # Build directories (but keep README files)
 build/*
 !build/README.md
-bin/*
-!bin/README.md
+Bin/*
+!Bin/README.md
 lib/
 out/
 dist/
 
 # Generated executables
-v8_claude_console
+cll
 demo
 enhanced_demo
 test_*

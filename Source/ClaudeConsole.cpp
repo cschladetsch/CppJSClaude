@@ -3,9 +3,10 @@
 #include <sstream>
 #include <algorithm>
 #include <filesystem>
-#include <format>
+#include <format> 
 #include <cstdlib>
 #include <chrono>
+#include <fstream>
 
 namespace fs = std::filesystem;
 
@@ -13,6 +14,12 @@ namespace claude_console {
 
 ClaudeConsole::ClaudeConsole()
     : mode_(ConsoleMode::Shell) {
+    
+    // Create config directory if it doesn't exist
+    CreateConfigDirectory();
+    
+    // Load user configuration
+    LoadConfiguration();
     
     // Initialize built-in commands
     builtinCommands_ = {
@@ -24,7 +31,9 @@ ClaudeConsole::ClaudeConsole()
         {"javascript", "Switch to JavaScript mode"},
         {"shell", "Switch to shell mode"},
         {"sh", "Switch to shell mode"},
-        {"ask", "Ask Claude AI a question"}
+        {"ask", "Ask Claude AI a question"},
+        {"config", "Manage configuration and aliases"},
+        {"reload", "Reload configuration from files"}
     };
 }
 
@@ -229,6 +238,41 @@ CommandResult ClaudeConsole::ExecuteBuiltinCommand(const std::string& command) {
             result.error = "Usage: ask <question>";
             result.exitCode = 1;
         }
+    } else if (cmd == "config") {
+        if (words.size() == 1) {
+            // Show config directory
+            result.output = "Configuration directory: " + GetConfigPath() + "\n";
+            result.output += "Configuration files:\n";
+            result.output += "  config.json - Main configuration\n";
+            result.output += "  aliases - Command aliases\n";
+            result.output += "\nUse 'reload' to reload configuration from files\n";
+        } else if (words.size() >= 3 && words[1] == "alias") {
+            // Set alias: config alias name=value
+            std::string aliasCmd = command.substr(command.find("alias") + 6); // Skip "config alias "
+            size_t eq = aliasCmd.find('=');
+            if (eq != std::string::npos) {
+                std::string name = aliasCmd.substr(0, eq);
+                std::string value = aliasCmd.substr(eq + 1);
+                // Remove quotes if present
+                if (value.size() >= 2 && value.front() == '"' && value.back() == '"') {
+                    value = value.substr(1, value.size() - 2);
+                }
+                SetAlias(name, value);
+                SaveConfiguration();
+                result.output = std::format("Alias set: {} = '{}'", name, value);
+            } else {
+                result.success = false;
+                result.error = "Usage: config alias name=value";
+                result.exitCode = 1;
+            }
+        } else {
+            result.success = false;
+            result.error = "Usage: config [alias name=value]";
+            result.exitCode = 1;
+        }
+    } else if (cmd == "reload") {
+        LoadConfiguration();
+        result.output = "Configuration reloaded from " + GetConfigPath();
     } else {
         result.success = false;
         result.error = "Unknown command: " + cmd;
@@ -276,6 +320,118 @@ std::string ClaudeConsole::FindPyClaudeCliPath() {
     }
     
     return "";
+}
+
+void ClaudeConsole::CreateConfigDirectory() {
+    std::string configDir = GetConfigPath();
+    if (!fs::exists(configDir)) {
+        fs::create_directories(configDir);
+        
+        // Create default configuration files
+        std::string configFile = configDir + "/config.json";
+        if (!fs::exists(configFile)) {
+            std::ofstream config(configFile);
+            config << "{\n";
+            config << "  \"default_mode\": \"shell\",\n";
+            config << "  \"prompt_format\": \"[{mode}] λ \",\n";
+            config << "  \"show_execution_time\": true,\n";
+            config << "  \"history_size\": 1000,\n";
+            config << "  \"enable_colors\": true,\n";
+            config << "  \"claude_integration\": {\n";
+            config << "    \"enabled\": true,\n";
+            config << "    \"timeout_seconds\": 30\n";
+            config << "  },\n";
+            config << "  \"aliases\": {\n";
+            config << "    \"ll\": \"ls -la\",\n";
+            config << "    \"la\": \"ls -la\",\n";
+            config << "    \"...\": \"cd ../..\"\n";
+            config << "  }\n";
+            config << "}\n";
+            config.close();
+        }
+        
+        // Create aliases file
+        std::string aliasFile = configDir + "/aliases";
+        if (!fs::exists(aliasFile)) {
+            std::ofstream aliases(aliasFile);
+            aliases << "# Claude Console Aliases\n";
+            aliases << "# Format: alias_name=command\n";
+            aliases << "ll=ls -la\n";
+            aliases << "la=ls -la\n";
+            aliases << "...=cd ../..\n";
+            aliases << "cls=clear\n";
+            aliases << "q=quit\n";
+            aliases.close();
+        }
+    }
+}
+
+void ClaudeConsole::LoadConfiguration() {
+    std::string configFile = GetConfigPath() + "/config.json";
+    if (fs::exists(configFile)) {
+        // TODO: Parse JSON configuration
+        // For now, just load basic aliases from aliases file
+        std::string aliasFile = GetConfigPath() + "/aliases";
+        if (fs::exists(aliasFile)) {
+            std::ifstream file(aliasFile);
+            std::string line;
+            while (std::getline(file, line)) {
+                if (line.empty() || line[0] == '#') continue;
+                
+                size_t eq = line.find('=');
+                if (eq != std::string::npos) {
+                    std::string name = line.substr(0, eq);
+                    std::string value = line.substr(eq + 1);
+                    SetAlias(name, value);
+                }
+            }
+        }
+    }
+}
+
+void ClaudeConsole::SaveConfiguration() {
+    // TODO: Save current configuration to JSON
+    // For now, just save aliases
+    std::string aliasFile = GetConfigPath() + "/aliases";
+    std::ofstream file(aliasFile);
+    file << "# Claude Console Aliases\n";
+    file << "# Format: alias_name=command\n";
+    for (const auto& [name, value] : aliases_) {
+        file << name << "=" << value << "\n";
+    }
+}
+
+std::string ClaudeConsole::GetConfigPath() const {
+    const char* home = std::getenv("HOME");
+    if (!home) {
+        home = std::getenv("USERPROFILE"); // Windows fallback
+    }
+    
+    if (home) {
+        return std::string(home) + "/.config/claude-console";
+    }
+    
+    return ".claude-console"; // Fallback to current directory
+}
+
+void ClaudeConsole::SetAlias(const std::string& name, const std::string& value) {
+    aliases_[name] = value;
+}
+
+std::string ClaudeConsole::ExpandAlias(const std::string& command) const {
+    auto words = SplitCommand(command);
+    if (words.empty()) return command;
+    
+    auto it = aliases_.find(words[0]);
+    if (it != aliases_.end()) {
+        std::string expanded = it->second;
+        for (size_t i = 1; i < words.size(); ++i) {
+            expanded += " " + words[i];
+        }
+        return expanded;
+    }
+    
+    return command;
 }
 
 void ClaudeConsole::Output(const std::string& text) {

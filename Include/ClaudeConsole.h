@@ -74,6 +74,19 @@ private:
     bool CheckClaudeAvailability();
     std::string FindPyClaudeCliPath();
     CommandResult ExecuteSubprocess(const std::string& command);
+    
+    // Configuration management
+    void CreateConfigDirectory();
+    void LoadConfiguration();
+    void SaveConfiguration();
+    std::string GetConfigPath() const;
+    
+    // Aliases
+    void SetAlias(const std::string& name, const std::string& value);
+    std::string ExpandAlias(const std::string& command) const;
+    
+    // Member variables for aliases
+    std::map<std::string, std::string> aliases_;
 };
 
 // History management

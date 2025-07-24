@@ -1,6 +1,6 @@
-# Source Code Directory
+# Source Directory
 
-This directory contains the core implementation of the CppV8-Claude Integration project.
+This directory contains the core implementation of the CLL (Claude Command Line) project.
 
 ## Files Overview
 
@@ -24,7 +24,7 @@ This directory contains the core implementation of the CppV8-Claude Integration 
   CommandResult ExecuteClaudeQuery(const std::string& question); // Claude AI integration
   ```
 
-### main.cpp
+### Main.cpp
 **Interactive terminal UI with readline support**
 
 - **Purpose**: Provides the interactive console interface for users
