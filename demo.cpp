@@ -1,7 +1,7 @@
 #include "ClaudeConsole.h"
 #include <iostream>
 
-using namespace claude_console;
+using namespace cll;
 
 int main() {
     std::cout << "=== CppV8-Claude Integration Demo ===\n\n";
