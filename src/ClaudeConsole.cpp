@@ -205,7 +205,9 @@ CommandResult ClaudeConsole::ExecuteBuiltinCommand(const std::string& command) {
         for (const auto& [name, desc] : builtinCommands_) {
             result.output += std::format("  {} - {}\n", name, desc);
         }
-        result.output += "\nMode: " + std::string(mode_ == ConsoleMode::JavaScript ? "JavaScript" : "Shell");
+        result.output += "\nSpecial features:\n";
+        result.output += "  &<javascript> - Execute JavaScript from shell mode (e.g., &Math.sqrt(16))\n";
+        result.output += "\nCurrent mode: " + std::string(mode_ == ConsoleMode::JavaScript ? "JavaScript" : "Shell");
     } else if (cmd == "quit" || cmd == "exit") {
         result.output = "Exiting...";
         // The UI layer should handle actual exit

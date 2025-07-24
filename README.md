@@ -51,7 +51,36 @@ The integration works by:
 ## Commands
 
 - `ask <question>` - Ask Claude AI a question
-- `js` - Switch to JavaScript mode
-- `shell` - Switch to shell mode
+- `js` / `javascript` - Switch to JavaScript mode
+- `shell` / `sh` - Switch to shell mode
+- `&<javascript>` - Execute JavaScript code from shell mode (prefix with &)
 - `help` - Show available commands
-- `quit` - Exit the console
+- `clear` - Clear the console screen
+- `quit` / `exit` - Exit the console
+
+## Usage Examples
+
+```bash
+# Ask Claude a question
+ask "What is the difference between const and let in JavaScript?"
+
+# Execute shell commands
+ls -la
+pwd
+
+# Switch to JavaScript mode
+js
+console.log("Hello World");
+Math.sqrt(64);
+
+# Execute JavaScript from shell mode using & prefix
+shell
+&console.log("JavaScript from shell mode!")
+&Math.PI * 2
+
+# Mixed mode usage
+echo "This is shell"
+&Math.random()
+ls
+&new Date().toISOString()
+```

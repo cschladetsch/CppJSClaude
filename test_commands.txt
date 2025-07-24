@@ -1,0 +1,7 @@
+help
+ask What is the capital of Japan?
+js
+Math.sqrt(16)
+shell
+ls -la
+exit
