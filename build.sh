@@ -222,7 +222,7 @@ run_tests() {
     if [ ! -f "$BUILD_DIR/demo" ]; then
         print_status "Building demo..."
         cd "$BUILD_DIR"
-        g++ -std=c++20 -I../Include ../demo.cpp ../Source/ClaudeConsole.cpp -o demo
+        g++ -std=c++20 -I../Include ../Tests/demo.cpp ../Source/ClaudeConsole.cpp -o demo
         cd ..
     fi
     
@@ -233,7 +233,7 @@ run_tests() {
     if [ ! -f "$BUILD_DIR/enhanced_demo" ]; then
         print_status "Building enhanced demo..."
         cd "$BUILD_DIR"
-        g++ -std=c++20 -I../Include ../enhanced_demo.cpp ../Source/ClaudeConsole.cpp -o enhanced_demo
+        g++ -std=c++20 -I../Include ../Tests/enhanced_demo.cpp ../Source/ClaudeConsole.cpp -o enhanced_demo
         cd ..
     fi
     

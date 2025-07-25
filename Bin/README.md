@@ -55,8 +55,8 @@ make
 g++ -std=c++20 -I../Include ../Source/Main.cpp -lClaudeConsole -o cll
 
 # Demo programs
-g++ -std=c++20 -I../Include ../demo.cpp -lClaudeConsole -o demo
-g++ -std=c++20 -I../Include ../enhanced_demo.cpp -lClaudeConsole -o enhanced_demo
+g++ -std=c++20 -I../Include ../Tests/demo.cpp -lClaudeConsole -o demo
+g++ -std=c++20 -I../Include ../Tests/enhanced_demo.cpp -lClaudeConsole -o enhanced_demo
 ```
 
 ## Runtime Requirements
