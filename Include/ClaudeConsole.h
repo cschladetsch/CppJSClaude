@@ -51,6 +51,7 @@ public:
     void SetMode(ConsoleMode mode) { mode_ = mode; }
     ConsoleMode GetMode() const { return mode_; }
     bool IsJavaScriptMode() const { return mode_ == ConsoleMode::JavaScript; }
+    bool IsAskMode() const { return multiLineMode_ == MultiLineMode::Ask; }
     
     // Multi-line input management
     bool IsInMultiLineMode() const { return multiLineMode_ != MultiLineMode::None; }

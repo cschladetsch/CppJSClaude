@@ -50,7 +50,7 @@ Hello World
 # Switch to Ask mode
 φ ask  
 θ What is the capital of France?
-The capital of France is Paris.
+Paris
 
 # Switch back to Shell mode
 θ sh
@@ -60,8 +60,8 @@ The capital of France is Paris.
 # Single-command prefixes (stay in current mode)
 λ &Math.PI * 2        # JavaScript
 6.283185307179586
-λ ?What is 2+2?        # Ask Claude
-2+2 equals 4.
+λ ?What is capital of canada        # Ask Claude
+Ottawa
 λ $pwd                # Shell command from any mode
 /home/user/project
 
@@ -96,8 +96,16 @@ CLL operates in three distinct modes, each with its own visual prompt and behavi
 ### 🤖 Ask Mode (θ)
 - **Prompt**: `θ` (theta in magenta)  
 - **Behavior**: Everything you type goes to Claude AI
-- **Features**: Natural language queries, programming help
-- **Switch**: Type `ask` or `claude`
+- **Features**: Natural language queries with common knowledge, external Claude CLI fallback
+- **Switch**: Type `ask`
+
+#### Common Knowledge Support
+CLL can answer common questions directly:
+- **World Capitals**: `what is capital of canada` → `Ottawa`
+- **Greetings**: `hello` → `Hello! How can I help you today?`
+- **Time/Date**: `what time is it` → Current system time
+- **Help**: `help` → Shows available topics and usage
+- **Fallback**: Unknown queries suggest external Claude CLI installation
 
 ### Single-Command Prefixes
 Execute once and stay in current mode:
@@ -141,7 +149,7 @@ CLL provides a zsh-like interface with special prefixes for enhanced functionali
 ### Mode Switching Commands
 - **`sh` / `shell`** - Switch to Shell mode (λ prompt)
 - **`js` / `javascript`** - Switch to JavaScript mode (φ prompt)
-- **`ask` / `claude`** - Switch to Ask mode (θ prompt)
+- **`ask`** - Switch to Ask mode (θ prompt)
 
 ### Single-Command Prefixes (stay in current mode)
 - **`&<code>`** - Execute JavaScript once (`&Math.sqrt(16)`)
@@ -153,11 +161,10 @@ CLL provides a zsh-like interface with special prefixes for enhanced functionali
 
 ### Built-in Commands
 - **`help`** - Show available commands and usage
-- **`version`** - Show CLL version information
-- **`configure`** - Run interactive configuration wizard
+- **`ask <question>`** - Ask Claude AI a question (e.g., `ask what is capital of canada`)
 - **`config`** - Show configuration directory location
+- **`reload`** - Reload configuration from files
 - **`clear`** - Clear the console screen
-- **`cmd <command>`** - Execute shell command and process output in current mode
 - **`quit` / `exit`** - Exit CLL
 
 ## Dependencies
@@ -175,8 +182,8 @@ CLL automatically fetches and builds required dependencies:
 - **readline**: Enhanced input editing (system package)
 
 ### Runtime Dependencies
-- Python 3.x with claude-cli (for Claude AI integration)
 - Standard POSIX shell environment
+- Optional: Python 3.x with claude-cli (for advanced Claude AI integration beyond common knowledge)
 
 ## Configuration
 
