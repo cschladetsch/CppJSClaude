@@ -13,3 +13,9 @@
 [submodule "External/json"]
 	path = External/json
 	url = https://github.com/nlohmann/json.git
+[submodule "External/depot_tools"]
+	path = External/depot_tools
+	url = https://chromium.googlesource.com/chromium/tools/depot_tools.git
+[submodule "External/v8"]
+	path = External/v8
+	url = https://chromium.googlesource.com/v8/v8.git

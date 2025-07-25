@@ -51,7 +51,6 @@ TEST_F(ClaudeConsoleTest, BuiltinCommandsTest) {
     EXPECT_TRUE(console->IsBuiltinCommand("javascript"));
     EXPECT_TRUE(console->IsBuiltinCommand("shell"));
     EXPECT_TRUE(console->IsBuiltinCommand("sh"));
-    EXPECT_TRUE(console->IsBuiltinCommand("ask"));
     EXPECT_TRUE(console->IsBuiltinCommand("config"));
     EXPECT_TRUE(console->IsBuiltinCommand("reload"));
     

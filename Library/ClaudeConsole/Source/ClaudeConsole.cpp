@@ -14,6 +14,10 @@
 #include <libplatform/libplatform.h>
 #endif
 
+#ifdef HAS_JSON
+#include <nlohmann/json.hpp>
+#endif
+
 namespace fs = std::filesystem;
 
 namespace cll {
@@ -47,7 +51,6 @@ ClaudeConsole::ClaudeConsole()
         {"javascript", "Switch to JavaScript mode"},
         {"shell", "Switch to shell mode"},
         {"sh", "Switch to shell mode"},
-        {"ask", "Ask Claude AI a question"},
         {"config", "Manage configuration and aliases"},
         {"reload", "Reload configuration from files"}
     };
@@ -152,7 +155,7 @@ CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
     } else if (trimmed == "shell" || trimmed == "sh") {
         SetMode(ConsoleMode::Shell);
         return {true, "Switched to Shell mode", "", std::chrono::microseconds(0), 0};
-    } else if (trimmed == "ask" || trimmed == "claude") {
+    } else if (trimmed == "claude") {
         SetMode(ConsoleMode::Ask);
         return {true, "Switched to Ask mode", "", std::chrono::microseconds(0), 0};
     }
@@ -207,8 +210,9 @@ CommandResult ClaudeConsole::ExecuteCommand(const std::string& command) {
         // Handle & prefix (JavaScript)
         if (prefix == '&') {
             if (trimmed.length() == 1) {
-                SetMode(ConsoleMode::JavaScript);
-                return {true, "Switched to JavaScript mode", "", std::chrono::microseconds(0), 0};
+                // Just '&' pressed - start multi-line JavaScript mode
+                StartMultiLineMode(MultiLineMode::JavaScript);
+                return {true, "Multi-line JavaScript mode (Ctrl-D to execute)", "", std::chrono::microseconds(0), 0};
             } else {
                 std::string jsCode = trimmed.substr(1);
                 return ExecuteJavaScript(jsCode);
@@ -445,22 +449,6 @@ CommandResult ClaudeConsole::ExecuteBuiltinCommand(const std::string& command) {
         // The UI layer should handle actual exit
     } else if (cmd == "clear") {
         result.output = "\033[2J\033[H"; // ANSI clear screen
-    } else if (cmd == "ask") {
-        // Execute Claude query
-        if (words.size() > 1) {
-            // Join all words after "ask" to form the question
-            std::string question;
-            for (size_t i = 1; i < words.size(); ++i) {
-                if (i > 1) question += " ";
-                question += words[i];
-            }
-            
-            return ExecuteClaudeQuery(question);
-        } else {
-            result.success = false;
-            result.error = "Usage: ask <question>";
-            result.exitCode = 1;
-        }
     } else if (cmd == "config") {
         if (words.size() == 1) {
             // Show config directory
@@ -619,9 +607,33 @@ void ClaudeConsole::LoadConfiguration() {
 }
 
 void ClaudeConsole::SaveConfiguration() {
-    // TODO: Save current configuration to JSON
-    // For now, just save aliases
-    std::string aliasFile = GetConfigPath() + "/aliases";
+    // Ensure config directory exists
+    std::string configPath = GetConfigPath();
+    fs::create_directories(configPath);
+    
+    // Save configuration to JSON
+    std::string configFile = configPath + "/config.json";
+    
+#ifdef HAS_JSON
+    nlohmann::json config;
+    config["default_mode"] = (mode_ == ConsoleMode::JavaScript) ? "javascript" : 
+                            (mode_ == ConsoleMode::Ask) ? "ask" : "shell";
+    config["prompt_format"] = promptFormat_;
+    config["claude_prompt"] = claudePrompt_;
+    config["claude_integration"] = {
+        {"enabled", true},
+        {"api_key", ""}  // API key would be set via environment variable
+    };
+    
+    std::ofstream jsonFile(configFile);
+    if (jsonFile.is_open()) {
+        jsonFile << config.dump(4);
+        jsonFile.close();
+    }
+#endif
+    
+    // Also save aliases separately
+    std::string aliasFile = configPath + "/aliases";
     std::ofstream file(aliasFile);
     file << "# Claude Console Aliases\n";
     file << "# Format: alias_name=command\n";
@@ -756,8 +768,8 @@ std::string ClaudeConsole::GetPrompt() const {
     std::string prompt = promptFormat_;
     
     // Replace {mode} placeholder
-    std::string modeStr = (mode_ == ConsoleMode::JavaScript) ? "φ" : 
-                          (mode_ == ConsoleMode::Ask) ? "θ" : "sh";
+    std::string modeStr = (mode_ == ConsoleMode::JavaScript) ? "js" : 
+                          (mode_ == ConsoleMode::Ask) ? "ask" : "sh";
     size_t pos = prompt.find("{mode}");
     if (pos != std::string::npos) {
         prompt.replace(pos, 6, modeStr);
@@ -769,7 +781,7 @@ std::string ClaudeConsole::GetPrompt() const {
 std::string ClaudeConsole::GetMultiLinePrompt() const {
     switch (multiLineMode_) {
         case MultiLineMode::JavaScript:
-            return "  ...φ ";
+            return "  ...js ";
         case MultiLineMode::Ask:
             return GetClaudePrompt();
         default:
